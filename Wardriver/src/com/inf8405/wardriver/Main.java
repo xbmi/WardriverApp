@@ -11,7 +11,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 public class Main extends ActionBarActivity {
 
@@ -19,6 +18,8 @@ public class Main extends ActionBarActivity {
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
+    
+    private WifiScanner mWifiScanner;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +27,7 @@ public class Main extends ActionBarActivity {
 		
 		setContentView(R.layout.activity_main);
 
-		mOptions = new String[]{"Start recording", "Settings", "Tits"};
+		mOptions = new String[]{"Start recording", "Settings", "Test Martin"};
 		
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerList = (ListView) findViewById(R.id.left_drawer);
@@ -38,6 +39,8 @@ public class Main extends ActionBarActivity {
         
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
+        
+        mWifiScanner = new WifiScanner(this);
 	}
 	
 	@Override
@@ -66,7 +69,11 @@ public class Main extends ActionBarActivity {
     }
 	
     private void itemSelected(int pos) {
-        Toast.makeText(this, "selectItem " + pos, Toast.LENGTH_SHORT).show();
+        if (mOptions[pos].equals("Test Martin"))
+        {
+        	mWifiScanner.scanNow(this);
+        }
+        
         mDrawerLayout.closeDrawer(mDrawerList);
     }
     
