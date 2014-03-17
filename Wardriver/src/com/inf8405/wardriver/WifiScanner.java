@@ -14,8 +14,8 @@ import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 
-public class WifiScanner {
-	
+public class WifiScanner
+{	
 	private WifiManager mWifiMgr;
 	private WifiBroadcastReceiver mWifiReceiver;
 	
@@ -46,14 +46,18 @@ public class WifiScanner {
 	private void newWifiDetected(Context context, ScanResult r)
 	{
 		// On affiche un dialog pour le nouveau wifi
+		boolean secured = (r.capabilities.contains("WPA") || r.capabilities.contains("WEP"));
+		
 		AlertDialog.Builder builder = new AlertDialog.Builder(context);
 	    builder.setTitle("New Wi-Fi detected!")
 	           .setCancelable(false)
 	    	   .setMessage("SSID: " + r.SSID +
 	    			   	  "\nBSSID: " + r.BSSID +
+	    			   	  "\nSecured: " + (secured ? "Yes" : "No") +
 	    			   	  "\n" + r.capabilities +
 	    			   	  "\nFreq: " + (float)(r.frequency / 1000.0) + " GHz" +
-	    			   	  "\nLevel: " + r.level + " dBm")
+	    			   	  "\nLevel: " + r.level + " dBm" +
+	    			   	  "\nEstimated distance: " + estimateRouterDistance(r.level, r.frequency) + "m")
 	    	   .setPositiveButton("OK", new OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
@@ -84,5 +88,20 @@ public class WifiScanner {
 				mWifiList.put(key, r);
 			}
 		}
+	}
+	
+	
+	// Fonction qui estime la distance d'un routeur de maison en fonction de la
+	// force du signal (dBm) et sa fréquence (MHz). Retourne la distance approx en mètres.
+	public int estimateRouterDistance(double signalStrengthInDBm, double freqInMHz)
+	{
+		// Formule originale pour "Free-space path loss in decibels"
+	    //double exp = (27.55 - (20 * Math.log10(freqInMHz)) - signalStrengthInDBm) / 20.0;
+	    //return Math.pow(10.0, exp);
+	    
+		// Formule modifiée par nous pour prendre compte que les routeur sont généralement
+		// dans des maisons avec plusieurs murs qui réduit rapidement la distance
+	    double exp = (80.0 - (20 * Math.log10(freqInMHz)) - signalStrengthInDBm) / 20.0;
+	    return (int)Math.pow(2.0, exp);
 	}
 }
