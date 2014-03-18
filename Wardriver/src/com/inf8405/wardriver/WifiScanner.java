@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.widget.TextView;
 
 public class WifiScanner
 {	
@@ -41,6 +42,41 @@ public class WifiScanner
 	{
 		// On envoi une demande de scan
 		mWifiMgr.startScan();
+	}
+	
+	private void listAllWifis(Context context)
+	{
+		// Gros dialog temporaire pour tester
+		String message = "";
+		for (String key : mWifiList.keySet())
+		{
+			ScanResult r = mWifiList.get(key);
+			boolean secured = (r.capabilities.contains("WPA") || r.capabilities.contains("WEP"));
+			
+	    	message +=   ("SSID: " + r.SSID +
+	    			   	  "\nBSSID: " + r.BSSID +
+	    			   	  "\nSecured: " + (secured ? "Yes" : "No") +
+	    			   	  "\n" + r.capabilities +
+	    			   	  "\nFreq: " + (float)(r.frequency / 1000.0) + " GHz" +
+	    			   	  "\nLevel: " + r.level + " dBm" +
+	    			   	  "\nEstimated distance: " + estimateRouterDistance(r.level, r.frequency) + "m\n\n");
+		}
+		
+		AlertDialog.Builder builder = new AlertDialog.Builder(context);
+	    builder.setTitle("Wi-Fi list")
+	           .setCancelable(false)
+	    	   .setMessage(message)
+	    	   .setPositiveButton("OK", new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				});
+	    final Dialog d = builder.create();
+	    d.show();
+	    
+	    TextView textView = (TextView) d.findViewById(android.R.id.message);
+	    textView.setTextSize(12);
 	}
 	
 	private void newWifiDetected(Context context, ScanResult r)
@@ -81,12 +117,14 @@ public class WifiScanner
 				if (mWifiList.get(key) == null)
 				{
 					// Nouveau wifi inconnu!
-					newWifiDetected(context, r);
+					//newWifiDetected(context, r);
 				}
 				
 				// On ajoute / met à jour la liste
 				mWifiList.put(key, r);
 			}
+			
+			listAllWifis(context);
 		}
 	}
 	
