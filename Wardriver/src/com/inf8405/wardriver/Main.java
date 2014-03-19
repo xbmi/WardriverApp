@@ -1,5 +1,8 @@
 package com.inf8405.wardriver;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -27,6 +30,7 @@ public class Main extends ActionBarActivity {
 		
 		setContentView(R.layout.activity_main);
 
+		// On récupère et ajuste le drawer
 		mOptions = new String[]{"Start recording", "Settings", "Test Martin"};
 		
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -40,6 +44,11 @@ public class Main extends ActionBarActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
         
+        // On récupère et ajuste la carte google
+        GoogleMap map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+        map.setMyLocationEnabled(true);
+        
+        // On contruit le wifi scanner
         mWifiScanner = new WifiScanner(this);
 	}
 	
