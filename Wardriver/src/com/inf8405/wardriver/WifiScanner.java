@@ -35,12 +35,12 @@ public class WifiScanner
 		
 		// On enregistre un recepteur
 		mWifiReceiver = new WifiBroadcastReceiver();
-		context.registerReceiver(mWifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
 	}
 	
 	public void scanNow(Context context)
 	{
-		// On envoi une demande de scan
+		// Enregistre le receiver et on envoi une demande de scan
+		context.registerReceiver(mWifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
 		mWifiMgr.startScan();
 	}
 	
@@ -125,6 +125,9 @@ public class WifiScanner
 			}
 			
 			listAllWifis(context);
+			
+			// On désenregistre le receiver
+			context.unregisterReceiver(WifiBroadcastReceiver.this);
 		}
 	}
 	
