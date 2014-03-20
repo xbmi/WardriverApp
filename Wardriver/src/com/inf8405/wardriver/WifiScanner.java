@@ -15,10 +15,9 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.widget.TextView;
 
-public class WifiScanner
+public class WifiScanner extends BroadcastReceiver
 {	
 	private WifiManager mWifiMgr;
-	private WifiBroadcastReceiver mWifiReceiver;
 	
 	private HashMap<String, ScanResult> mWifiList = new HashMap<String, ScanResult>();
 	
@@ -32,15 +31,12 @@ public class WifiScanner
         {
 			mWifiMgr.setWifiEnabled(true);
         }
-		
-		// On enregistre un recepteur
-		mWifiReceiver = new WifiBroadcastReceiver();
 	}
 	
 	public void scanNow(Context context)
 	{
 		// Enregistre le receiver et on envoi une demande de scan
-		context.registerReceiver(mWifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+		context.registerReceiver(this, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
 		mWifiMgr.startScan();
 	}
 	
@@ -104,31 +100,29 @@ public class WifiScanner
 	    d.show();
 	}
 
-	private class WifiBroadcastReceiver extends BroadcastReceiver
-	{
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			List<ScanResult> wifiList = mWifiMgr.getScanResults();
-			for (ScanResult r : wifiList)
+
+	@Override
+	public void onReceive(Context context, Intent intent) {
+		List<ScanResult> wifiList = mWifiMgr.getScanResults();
+		for (ScanResult r : wifiList)
+		{
+			// SSID + " " + BSSID va être la clé unique représentant un wifi
+			String key = r.SSID + " " + r.BSSID;
+			
+			if (mWifiList.get(key) == null)
 			{
-				// SSID + " " + BSSID va être la clé unique représentant un wifi
-				String key = r.SSID + " " + r.BSSID;
-				
-				if (mWifiList.get(key) == null)
-				{
-					// Nouveau wifi inconnu!
-					//newWifiDetected(context, r);
-				}
-				
-				// On ajoute / met à jour la liste
-				mWifiList.put(key, r);
+				// Nouveau wifi inconnu!
+				//newWifiDetected(context, r);
 			}
 			
-			listAllWifis(context);
-			
-			// On désenregistre le receiver
-			context.unregisterReceiver(WifiBroadcastReceiver.this);
+			// On ajoute / met à jour la liste
+			mWifiList.put(key, r);
 		}
+		
+		listAllWifis(context);
+		
+		// On désenregistre le receiver
+		context.unregisterReceiver(this);
 	}
 	
 	

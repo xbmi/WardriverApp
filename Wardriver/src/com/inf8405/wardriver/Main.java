@@ -1,7 +1,9 @@
 package com.inf8405.wardriver;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -16,13 +18,18 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 public class Main extends ActionBarActivity {
-
+	
 	private String[] mOptions;
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
     
+    private GoogleMap mMap;
+    
     private WifiScanner mWifiScanner;
+    
+    private Compass mCompass;
+    private boolean compassEnabled = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -31,7 +38,7 @@ public class Main extends ActionBarActivity {
 		setContentView(R.layout.activity_main);
 
 		// On récupère et ajuste le drawer
-		mOptions = new String[]{"Start recording", "Settings", "Test Martin"};
+		mOptions = new String[]{"Start recording", "Settings", "Test Wi-Fi", "Test compass"};
 		
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerList = (ListView) findViewById(R.id.left_drawer);
@@ -45,11 +52,14 @@ public class Main extends ActionBarActivity {
         getSupportActionBar().setHomeButtonEnabled(true);
         
         // On récupère et ajuste la carte google
-        GoogleMap map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-        map.setMyLocationEnabled(true);
+        mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+        mMap.setMyLocationEnabled(true);
         
         // On contruit le wifi scanner
         mWifiScanner = new WifiScanner(this);
+        
+        // On contruit le compass
+        mCompass = new Compass(this);
 	}
 	
 	@Override
@@ -62,6 +72,26 @@ public class Main extends ActionBarActivity {
 	public void onConfigurationChanged(Configuration newConfig) {
 	    super.onConfigurationChanged(newConfig);
 	    mDrawerToggle.onConfigurationChanged(newConfig);
+	}
+	
+	@Override
+	public void onPause()
+	{
+		super.onPause();
+		if (compassEnabled)
+		{
+			mCompass.stop();
+		}
+	}
+	
+	@Override
+	public void onResume()
+	{
+		super.onResume();
+		if (compassEnabled)
+		{
+			mCompass.start();
+		}
 	}
 	
 	@Override
@@ -78,9 +108,30 @@ public class Main extends ActionBarActivity {
     }
 	
     private void itemSelected(int pos) {
-        if (mOptions[pos].equals("Test Martin"))
+        if (mOptions[pos].equals("Test Wi-Fi"))
         {
         	mWifiScanner.scanNow(this);
+        }
+        else if (mOptions[pos].equals("Test compass"))
+        {
+        	if (compassEnabled)
+        	{
+        		mCompass.stop();
+        		compassEnabled = false;
+        		
+        		// On remet la caméra droite
+    			CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition())
+				.bearing(0)
+				.build();
+    			mMap.stopAnimation();
+    			mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
+        	}
+        	else
+        	{
+            	mCompass.registerMap(mMap);
+            	mCompass.start();
+            	compassEnabled = true;
+        	}
         }
         
         mDrawerLayout.closeDrawer(mDrawerList);
