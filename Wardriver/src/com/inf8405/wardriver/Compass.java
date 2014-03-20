@@ -1,9 +1,5 @@
 package com.inf8405.wardriver;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.CameraPosition;
-
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -13,9 +9,9 @@ import android.hardware.SensorManager;
 public class Compass implements SensorEventListener
 {
 	private boolean mRunning = false;
-	private float mDegree = 0f;
+	private float mAzimuth = 0f;
 	private SensorManager mSensorMgr = null;
-	private GoogleMap mMapToRotate = null;
+	private WifiMap mMapToRotate = null;
 	
 	public Compass(Context context)
 	{
@@ -42,7 +38,12 @@ public class Compass implements SensorEventListener
 		return mRunning;
 	}
 	
-	public void registerMap(GoogleMap map)
+	public float getAzimuth()
+	{
+		return mAzimuth;
+	}
+	
+	public void registerMap(WifiMap map)
 	{
 		mMapToRotate = map;
 	}
@@ -57,19 +58,15 @@ public class Compass implements SensorEventListener
 	public void onSensorChanged(SensorEvent event)
 	{
 		// On vérifie si l'azimuth a changé (values[0])
-		if (Math.abs(mDegree - event.values[0]) > 5)
+		if (Math.abs(mAzimuth - event.values[0]) > 5)
 		{
 			// Si oui on la récupère
-			mDegree = event.values[0]; // Note: 0=Nord, 90=Est, 180=Sud, 270=Ouest
+			mAzimuth = event.values[0]; // Note: 0=Nord, 90=Est, 180=Sud, 270=Ouest
 			
 			// Si on a une map, on la rotate
 			if (mMapToRotate != null)
 			{
-				CameraPosition camPos = CameraPosition.builder(mMapToRotate.getCameraPosition())
-					.bearing(mDegree)
-					.build();
-				mMapToRotate.stopAnimation();
-				mMapToRotate.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
+				mMapToRotate.rotateTo(mAzimuth);
 			}
 		}
 	}

@@ -1,9 +1,7 @@
 package com.inf8405.wardriver;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.inf8405.wardriver.WifiMap.MarkerType;
 
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -17,14 +15,14 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-public class Main extends ActionBarActivity {
-	
+public class Main extends ActionBarActivity
+{	
 	private String[] mOptions;
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
     
-    private GoogleMap mMap;
+    private WifiMap mMap;
     
     private WifiScanner mWifiScanner;
     
@@ -32,13 +30,14 @@ public class Main extends ActionBarActivity {
     private boolean compassEnabled = false;
 
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+	protected void onCreate(Bundle savedInstanceState)
+	{
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.activity_main);
 
 		// On récupère et ajuste le drawer
-		mOptions = new String[]{"Start recording", "Settings", "Test Wi-Fi", "Test compass"};
+		mOptions = new String[]{"Start recording", "Settings", "Test Wi-Fi", "Test compass", "Test pins"};
 		
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerList = (ListView) findViewById(R.id.left_drawer);
@@ -51,9 +50,8 @@ public class Main extends ActionBarActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
         
-        // On récupère et ajuste la carte google
-        mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-        mMap.setMyLocationEnabled(true);
+        // On construit la carte google pour les wifi
+        mMap = new WifiMap(getFragmentManager());
         
         // On contruit le wifi scanner
         mWifiScanner = new WifiScanner(this);
@@ -63,13 +61,15 @@ public class Main extends ActionBarActivity {
 	}
 	
 	@Override
-	protected void onPostCreate(Bundle savedInstanceState) {
+	protected void onPostCreate(Bundle savedInstanceState)
+	{
 	    super.onPostCreate(savedInstanceState);
 	    mDrawerToggle.syncState();
 	}
 
 	@Override
-	public void onConfigurationChanged(Configuration newConfig) {
+	public void onConfigurationChanged(Configuration newConfig)
+	{
 	    super.onConfigurationChanged(newConfig);
 	    mDrawerToggle.onConfigurationChanged(newConfig);
 	}
@@ -95,7 +95,8 @@ public class Main extends ActionBarActivity {
 	}
 	
 	@Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item)
+	{
 		if (mDrawerLayout.isDrawerOpen(mDrawerList))
 		{
 			mDrawerLayout.closeDrawer(mDrawerList);
@@ -107,7 +108,9 @@ public class Main extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 	
-    private void itemSelected(int pos) {
+    private void itemSelected(int pos)
+    {
+    	// Temporaire!
         if (mOptions[pos].equals("Test Wi-Fi"))
         {
         	mWifiScanner.scanNow(this);
@@ -118,13 +121,7 @@ public class Main extends ActionBarActivity {
         	{
         		mCompass.stop();
         		compassEnabled = false;
-        		
-        		// On remet la caméra droite
-    			CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition())
-				.bearing(0)
-				.build();
-    			mMap.stopAnimation();
-    			mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
+        		mMap.resetOrientation();
         	}
         	else
         	{
@@ -133,13 +130,21 @@ public class Main extends ActionBarActivity {
             	compassEnabled = true;
         	}
         }
+        else if (mOptions[pos].equals("Test pins"))
+        {
+        	mMap.addWifiMarker(new LatLng(45.583, -73.806), "Test secure", MarkerType.SECURED);
+        	mMap.addWifiMarker(new LatLng(45.584, -73.807), "Test unsecured", MarkerType.UNSECURED);
+        	mMap.addWifiMarker(new LatLng(45.585, -73.808), "Test vulnerable", MarkerType.VULNERABLE);
+        }
         
         mDrawerLayout.closeDrawer(mDrawerList);
     }
     
-    private class DrawerItemClickListener implements ListView.OnItemClickListener {
+    private class DrawerItemClickListener implements ListView.OnItemClickListener
+    {
         @Override
-        public void onItemClick(AdapterView parent, View view, int position, long id) {
+        public void onItemClick(AdapterView parent, View view, int position, long id)
+        {
         	itemSelected(position);
         }
     }
