@@ -1,0 +1,25 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <PreferenceCategory 
+        android:title="Compass" >
+        <ListPreference
+            android:key="@string/pref_key_compass_offset"
+            android:title="Azimuth offset"
+            android:summary="If compass calibration is poor"
+            android:defaultValue="0"
+            android:entries="@array/compass_offset"
+            android:entryValues="@array/compass_offset_values" />
+    </PreferenceCategory>
+    
+    <PreferenceCategory
+        android:title="Wireless" >
+        <ListPreference
+            android:key="@string/pref_key_wifi_scanrate"
+            android:title="Scan rate"
+            android:summary="Interval between wireless scans"
+            android:defaultValue="3000"
+            android:entries="@array/wifi_update_nterval"
+            android:entryValues="@array/wifi_update_interval_values" />
+    </PreferenceCategory>
+    
+</PreferenceScreen>

@@ -77,27 +77,7 @@ public class WifiScanner extends BroadcastReceiver
 	
 	private void newWifiDetected(Context context, ScanResult r)
 	{
-		// On affiche un dialog pour le nouveau wifi
-		boolean secured = (r.capabilities.contains("WPA") || r.capabilities.contains("WEP"));
-		
-		AlertDialog.Builder builder = new AlertDialog.Builder(context);
-	    builder.setTitle("New Wi-Fi detected!")
-	           .setCancelable(false)
-	    	   .setMessage("SSID: " + r.SSID +
-	    			   	  "\nBSSID: " + r.BSSID +
-	    			   	  "\nSecured: " + (secured ? "Yes" : "No") +
-	    			   	  "\n" + r.capabilities +
-	    			   	  "\nFreq: " + (float)(r.frequency / 1000.0) + " GHz" +
-	    			   	  "\nLevel: " + r.level + " dBm" +
-	    			   	  "\nEstimated distance: " + estimateRouterDistance(r.level, r.frequency) + "m")
-	    	   .setPositiveButton("OK", new OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				});
-	    final Dialog d = builder.create();
-	    d.show();
+		//TODO: nouveau wifi...
 	}
 
 
@@ -112,13 +92,14 @@ public class WifiScanner extends BroadcastReceiver
 			if (mWifiList.get(key) == null)
 			{
 				// Nouveau wifi inconnu!
-				//newWifiDetected(context, r);
+				newWifiDetected(context, r);
 			}
 			
 			// On ajoute / met à jour la liste
 			mWifiList.put(key, r);
 		}
 		
+		// FIXME: temporaire
 		listAllWifis(context);
 		
 		// On désenregistre le receiver

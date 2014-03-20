@@ -3,11 +3,13 @@ package com.inf8405.wardriver;
 import com.google.android.gms.maps.model.LatLng;
 import com.inf8405.wardriver.WifiMap.MarkerType;
 
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,8 +17,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-public class Main extends ActionBarActivity
-{	
+public class MainActivity extends ActionBarActivity
+{
+	private static final int RESULT_SETTINGS_ACTIVITY = 1;
+	
 	private String[] mOptions;
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
@@ -27,7 +31,7 @@ public class Main extends ActionBarActivity
     private WifiScanner mWifiScanner;
     
     private Compass mCompass;
-    private boolean compassEnabled = false;
+    private boolean mCompassEnabled = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -37,7 +41,7 @@ public class Main extends ActionBarActivity
 		setContentView(R.layout.activity_main);
 
 		// On récupère et ajuste le drawer
-		mOptions = new String[]{"Start recording", "Settings", "Test Wi-Fi", "Test compass", "Test pins"};
+		mOptions = getResources().getStringArray(R.array.menu_options);
 		
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerList = (ListView) findViewById(R.id.left_drawer);
@@ -58,6 +62,7 @@ public class Main extends ActionBarActivity
         
         // On contruit le compass
         mCompass = new Compass(this);
+        mCompass.setAzimuthOffset( SettingsActivity.getCompassOffset(this) );
 	}
 	
 	@Override
@@ -78,7 +83,7 @@ public class Main extends ActionBarActivity
 	public void onPause()
 	{
 		super.onPause();
-		if (compassEnabled)
+		if (mCompassEnabled)
 		{
 			mCompass.stop();
 		}
@@ -88,7 +93,7 @@ public class Main extends ActionBarActivity
 	public void onResume()
 	{
 		super.onResume();
-		if (compassEnabled)
+		if (mCompassEnabled)
 		{
 			mCompass.start();
 		}
@@ -110,27 +115,42 @@ public class Main extends ActionBarActivity
 	
     private void itemSelected(int pos)
     {
-    	// Temporaire!
-        if (mOptions[pos].equals("Test Wi-Fi"))
-        {
-        	mWifiScanner.scanNow(this);
-        }
-        else if (mOptions[pos].equals("Test compass"))
-        {
-        	if (compassEnabled)
+    	String option = mOptions[pos];
+    	if (option.equals( getResources().getString(R.string.menu_record_start)) )
+    	{
+    		mOptions[pos] = getResources().getString(R.string.menu_record_stop);
+    		mDrawerList.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_list, mOptions));
+    	}
+    	else if (option.equals( getResources().getString(R.string.menu_record_stop)) )
+    	{
+    		mOptions[pos] = getResources().getString(R.string.menu_record_start);
+    		mDrawerList.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_list, mOptions));
+    	}
+    	else if (option.equals( getResources().getString(R.string.menu_options)) )
+    	{
+    		Intent intent = new Intent(this, SettingsActivity.class);
+    		this.startActivityForResult(intent, RESULT_SETTINGS_ACTIVITY);
+    	}
+    	else if (option.equals( getResources().getString(R.string.menu_testWifi)) ) // Temporaire!
+    	{
+    		mWifiScanner.scanNow(this);
+    	}
+    	else if (option.equals( getResources().getString(R.string.menu_testCompass)) ) // Temporaire!
+    	{
+        	if (mCompassEnabled)
         	{
         		mCompass.stop();
-        		compassEnabled = false;
+        		mCompassEnabled = false;
         		mMap.resetOrientation();
         	}
         	else
         	{
             	mCompass.registerMap(mMap);
             	mCompass.start();
-            	compassEnabled = true;
+            	mCompassEnabled = true;
         	}
-        }
-        else if (mOptions[pos].equals("Test pins"))
+    	}
+        else if (option.equals( getResources().getString(R.string.menu_testPins)) ) // Temporaire!
         {
         	mMap.addWifiMarker(new LatLng(45.583, -73.806), "Test secure", MarkerType.SECURED);
         	mMap.addWifiMarker(new LatLng(45.584, -73.807), "Test unsecured", MarkerType.UNSECURED);
@@ -142,10 +162,31 @@ public class Main extends ActionBarActivity
     
     private class DrawerItemClickListener implements ListView.OnItemClickListener
     {
-        @Override
+        @SuppressWarnings("rawtypes")
+		@Override
         public void onItemClick(AdapterView parent, View view, int position, long id)
         {
         	itemSelected(position);
         }
     }
+    
+    @Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+		super.onActivityResult(requestCode, resultCode, data);
+		switch (requestCode)
+		{
+			case RESULT_SETTINGS_ACTIVITY:
+				// Paramètres ont possiblement été changés, on met à jour
+				mCompass.setAzimuthOffset( SettingsActivity.getCompassOffset(this) );
+				if (mCompassEnabled)
+				{
+					mCompass.applyMapRotation();
+				}
+				Log.i("onActivityResult", "Compass offset: " + SettingsActivity.getCompassOffset(this));
+				// TODO: wifi scan offset
+				Log.i("onActivityResult", "Wifi scan interval: " + SettingsActivity.getWifiScanInterval(this));
+				break;
+		}
+	}
 }

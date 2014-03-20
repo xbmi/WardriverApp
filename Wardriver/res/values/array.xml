@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <string-array name="menu_options">
+        <item>@string/menu_record_start</item>
+        <item>@string/menu_options</item>
+        <item>@string/menu_testWifi</item>
+        <item>@string/menu_testCompass</item>
+        <item>@string/menu_testPins</item>
+    </string-array>
+    
+    <string-array name="compass_offset">
+        <item name="-20">-20 degrees</item>
+        <item name="-15">-15 degrees</item>
+        <item name="-10">-10 degrees</item>
+        <item name="-5">-5 degrees</item>
+        <item name="0">0 degrees</item>
+        <item name="5">5 degrees</item>
+        <item name="10">10 degrees</item>
+        <item name="15">15 degrees</item>
+        <item name="20">20 degrees</item>
+    </string-array>
+    
+    <string-array name="compass_offset_values">
+        <item name="-20">-20</item>
+        <item name="-15">-15</item>
+        <item name="-10">-10</item>
+        <item name="-5">-5</item>
+        <item name="0">0</item>
+        <item name="5">5</item>
+        <item name="10">10</item>
+        <item name="15">15</item>
+        <item name="20">20</item>
+    </string-array>
+    
+    <string-array name="wifi_update_nterval">
+        <item name="1000">Every 1 second</item>
+        <item name="3000">Every 3 seconds</item>
+        <item name="5000">Every 5 seconds</item>
+        <item name="10000">Every 10 seconds</item>
+        <item name="20000">Every 20 seconds</item>
+    </string-array>
+    
+    <string-array name="wifi_update_interval_values">
+        <item name="1000">1000</item>
+        <item name="3000">3000</item>
+        <item name="5000">5000</item>
+        <item name="10000">10000</item>
+        <item name="20000">20000</item>
+    </string-array>
+    
+</resources>

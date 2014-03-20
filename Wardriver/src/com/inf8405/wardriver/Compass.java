@@ -10,6 +10,7 @@ public class Compass implements SensorEventListener
 {
 	private boolean mRunning = false;
 	private float mAzimuth = 0f;
+	private int mOffset = 0;
 	private SensorManager mSensorMgr = null;
 	private WifiMap mMapToRotate = null;
 	
@@ -19,6 +20,7 @@ public class Compass implements SensorEventListener
 		mSensorMgr = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 	}
 	
+	@SuppressWarnings("deprecation")
 	public void start()
 	{
 		// On s'enregistre auprès du censeur d'orientation
@@ -40,7 +42,12 @@ public class Compass implements SensorEventListener
 	
 	public float getAzimuth()
 	{
-		return mAzimuth;
+		return mAzimuth + mOffset;
+	}
+	
+	public void setAzimuthOffset(int offset)
+	{
+		mOffset = offset;
 	}
 	
 	public void registerMap(WifiMap map)
@@ -60,14 +67,17 @@ public class Compass implements SensorEventListener
 		// On vérifie si l'azimuth a changé (values[0])
 		if (Math.abs(mAzimuth - event.values[0]) > 5)
 		{
-			// Si oui on la récupère
+			// Si oui on la récupère et rotate la carte
 			mAzimuth = event.values[0]; // Note: 0=Nord, 90=Est, 180=Sud, 270=Ouest
-			
-			// Si on a une map, on la rotate
-			if (mMapToRotate != null)
-			{
-				mMapToRotate.rotateTo(mAzimuth);
-			}
+			applyMapRotation();
+		}
+	}
+	
+	public void applyMapRotation()
+	{
+		if (mMapToRotate != null)
+		{
+			mMapToRotate.rotateTo(mAzimuth + mOffset);
 		}
 	}
 }
