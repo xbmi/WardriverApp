@@ -13,11 +13,13 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 
-public class MainActivity extends ActionBarActivity
+public class MainActivity extends ActionBarActivity implements OnClickListener
 {
 	private static final int RESULT_SETTINGS_ACTIVITY = 1;
 	
@@ -32,6 +34,7 @@ public class MainActivity extends ActionBarActivity
     
     private Compass mCompass;
     private boolean mCompassEnabled = false;
+    private Button mBtnCompass;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -63,6 +66,8 @@ public class MainActivity extends ActionBarActivity
         // On contruit le compass
         mCompass = new Compass(this);
         mCompass.setAzimuthOffset( SettingsActivity.getCompassOffset(this) );
+        mBtnCompass = (Button) findViewById(R.id.btnCompass);
+        mBtnCompass.setOnClickListener(this);
 	}
 	
 	@Override
@@ -135,21 +140,6 @@ public class MainActivity extends ActionBarActivity
     	{
     		mWifiScanner.scanNow(this);
     	}
-    	else if (option.equals( getResources().getString(R.string.menu_testCompass)) ) // Temporaire!
-    	{
-        	if (mCompassEnabled)
-        	{
-        		mCompass.stop();
-        		mCompassEnabled = false;
-        		mMap.resetOrientation();
-        	}
-        	else
-        	{
-            	mCompass.registerMap(mMap);
-            	mCompass.start();
-            	mCompassEnabled = true;
-        	}
-    	}
         else if (option.equals( getResources().getString(R.string.menu_testPins)) ) // Temporaire!
         {
         	mMap.addWifiMarker(new LatLng(45.583, -73.806), "Test secure", MarkerType.SECURED);
@@ -186,6 +176,31 @@ public class MainActivity extends ActionBarActivity
 				Log.i("onActivityResult", "Compass offset: " + SettingsActivity.getCompassOffset(this));
 				// TODO: wifi scan offset
 				Log.i("onActivityResult", "Wifi scan interval: " + SettingsActivity.getWifiScanInterval(this));
+				break;
+		}
+	}
+
+	@SuppressWarnings("deprecation")
+	@Override
+	public void onClick(View v)
+	{
+		switch (v.getId())
+		{
+			case R.id.btnCompass:
+				if (mCompassEnabled)
+				{
+					mCompassEnabled = false;
+					mBtnCompass.setBackgroundDrawable(getResources().getDrawable(R.drawable.compass_off));
+	        		mCompass.stop();
+	        		mMap.resetOrientation();
+				}
+				else
+				{
+					mCompassEnabled = true;
+					mBtnCompass.setBackgroundDrawable(getResources().getDrawable(R.drawable.compass_on));
+	            	mCompass.registerMap(mMap);
+	            	mCompass.start();
+				}
 				break;
 		}
 	}
