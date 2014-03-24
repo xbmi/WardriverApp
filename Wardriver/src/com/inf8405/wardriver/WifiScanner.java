@@ -1,6 +1,7 @@
 package com.inf8405.wardriver;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 import android.app.AlertDialog;
@@ -13,6 +14,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.os.Handler;
+import android.util.Log;
 import android.widget.TextView;
 
 public class WifiScanner extends BroadcastReceiver
@@ -21,8 +24,17 @@ public class WifiScanner extends BroadcastReceiver
 	
 	private HashMap<String, ScanResult> mWifiList = new HashMap<String, ScanResult>();
 	
+	private LinkedList<WifiListener> listeners = new LinkedList<WifiListener>();
+	
+	private boolean mRunning = false;
+	private volatile int mIntervalMS = 0;
+	
+	
 	public WifiScanner(Context context)
 	{
+		listeners.clear();
+		mRunning = false;
+		
 		// Récupère le service de wifi
 		mWifiMgr = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 		
@@ -33,13 +45,79 @@ public class WifiScanner extends BroadcastReceiver
         }
 	}
 	
-	public void scanNow(Context context)
+	// Enregistre un observateur
+	public void addListener(WifiListener l)
 	{
-		// Enregistre le receiver et on envoi une demande de scan
-		context.registerReceiver(this, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-		mWifiMgr.startScan();
+		listeners.add(l);
 	}
 	
+	// Désenregistre un observateur
+	public void removeListener(WifiListener l)
+	{
+		listeners.remove(l);
+	}
+	
+	// Fonction qui démarre le scanner de wifi (ou update l'interval)
+	// Scan uniquement 1 fois si l'interval recu est de 0
+	public void start(Context context, int intervalMS)
+	{
+		if (mRunning)
+		{
+			// Déjà démarré, on update l'interval et c'est tout
+			mIntervalMS = intervalMS;
+		}
+		else
+		{
+			// Enregistre le receiver et on envoi une demande de scan
+			context.registerReceiver(this, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+			mIntervalMS = intervalMS;
+			if (mIntervalMS == 0)
+			{
+				mWifiMgr.startScan();
+			}
+			else
+			{
+				mRunning = true;
+				scanAndPost();
+			}
+		}
+	}
+	
+	// Fonction qui arrête le scanner de wifi
+	public void stop(Context context)
+	{
+		// Désenregistre le receiver
+		mRunning = false;
+		context.unregisterReceiver(this);
+	}
+	
+	// Retourne si le scanner est actif
+	public boolean isRunning()
+	{
+		return mRunning;
+	}
+	
+	// Démarre un scan et se rappèle après chaque interval tant que 'mRunning' est vrai
+	private void scanAndPost()
+	{
+		if (mRunning)
+		{
+			// Démarre un scan immédiatement
+			mWifiMgr.startScan();
+			
+			// On relance un autre scan après l'interval
+			final Handler handler = new Handler();
+			handler.postDelayed(new Runnable() {
+				@Override
+				public void run()
+				{
+					scanAndPost();
+				}
+			}, mIntervalMS);
+		}
+	}
+	
+	// FIXME: temporaire, pour tester
 	private void listAllWifis(Context context)
 	{
 		// Gros dialog temporaire pour tester
@@ -75,9 +153,13 @@ public class WifiScanner extends BroadcastReceiver
 	    textView.setTextSize(12);
 	}
 	
-	private void newWifiDetected(Context context, ScanResult r)
+	private void newWifiFound(ScanResult r)
 	{
-		//TODO: nouveau wifi...
+		// On notifie les observateurs
+		for (WifiListener l : listeners)
+		{
+			l.onNewWifiFound(r);
+		}
 	}
 
 
@@ -92,18 +174,24 @@ public class WifiScanner extends BroadcastReceiver
 			if (mWifiList.get(key) == null)
 			{
 				// Nouveau wifi inconnu!
-				newWifiDetected(context, r);
+				newWifiFound(r);
 			}
 			
 			// On ajoute / met à jour la liste
+			// TODO: vérifier si la distance est plus petite qu'avant -> updater
 			mWifiList.put(key, r);
 		}
 		
-		// FIXME: temporaire
-		listAllWifis(context);
+		// FIXME: temporaire, enlever
+		Log.i("WifiScanner", "Scan result received!");
 		
-		// On désenregistre le receiver
-		context.unregisterReceiver(this);
+		if (mIntervalMS == 0)
+		{
+			// On ne répète pas, on stoppe
+			mRunning = false;
+			context.unregisterReceiver(this);
+			listAllWifis(context); // FIXME: Temporaire pour tester
+		}
 	}
 	
 	

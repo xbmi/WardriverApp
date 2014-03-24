@@ -31,6 +31,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
     private WifiMap mMap;
     
     private WifiScanner mWifiScanner;
+    private int mWifiScanIntervalMS = 0;
     
     private Compass mCompass;
     private boolean mCompassEnabled = false;
@@ -62,6 +63,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
         
         // On contruit le wifi scanner
         mWifiScanner = new WifiScanner(this);
+        mWifiScanIntervalMS = SettingsActivity.getWifiScanInterval(this);
         
         // On contruit le compass
         mCompass = new Compass(this);
@@ -138,7 +140,14 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
     	}
     	else if (option.equals( getResources().getString(R.string.menu_testWifi)) ) // Temporaire!
     	{
-    		mWifiScanner.scanNow(this);
+    		if (mWifiScanner.isRunning())
+    		{
+    			mWifiScanner.stop(this);
+    		}
+    		else
+    		{
+    			mWifiScanner.start(this, 0); //FIXME: 0 temporaire, mettre mWifiScanIntervalMS
+    		}
     	}
         else if (option.equals( getResources().getString(R.string.menu_testPins)) ) // Temporaire!
         {
@@ -168,14 +177,23 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
 		{
 			case RESULT_SETTINGS_ACTIVITY:
 				// Paramètres ont possiblement été changés, on met à jour
+				
+				// Offset de la boussole
 				mCompass.setAzimuthOffset( SettingsActivity.getCompassOffset(this) );
 				if (mCompassEnabled)
 				{
 					mCompass.applyMapRotation();
 				}
 				Log.i("onActivityResult", "Compass offset: " + SettingsActivity.getCompassOffset(this));
-				// TODO: wifi scan offset
-				Log.i("onActivityResult", "Wifi scan interval: " + SettingsActivity.getWifiScanInterval(this));
+				
+				// Interval de scan wifi
+				mWifiScanIntervalMS = SettingsActivity.getWifiScanInterval(this);
+				if (mWifiScanner.isRunning())
+				{
+					mWifiScanner.start(this, mWifiScanIntervalMS);
+				}
+				Log.i("onActivityResult", "Wifi scan interval: " + mWifiScanIntervalMS);
+				
 				break;
 		}
 	}
