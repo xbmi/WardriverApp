@@ -15,9 +15,13 @@ public class SettingsActivity extends PreferenceActivity
     public void onCreate(Bundle savedInstanceState) {        
         super.onCreate(savedInstanceState);
         getActionBar().setDisplayHomeAsUpEnabled(true);
-        addPreferencesFromResource(R.xml.preferences);        
+        
+        // On contruit la page à l'aide du fichier XML de préférences
+        // On n'utilise pas les fragments pour avoir une meilleure rétro-compatibilité
+        addPreferencesFromResource(R.xml.preferences);
     }
     
+    // Lorsqu'on clique sur l'icone de l'application en haut à gauche
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem)
     {       
@@ -25,12 +29,14 @@ public class SettingsActivity extends PreferenceActivity
         return true;
     }
 	
+    // Retourne la valeur sauvegardée ou sinon celle par défaut de l'offset de la boussole
 	public static int getCompassOffset(Context c)
 	{
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
 		return Integer.parseInt( prefs.getString( c.getResources().getString(R.string.pref_key_compass_offset), "0" ) );
 	}
 	
+	// Retourne la valeur sauvegardée ou sinon celle par défaut de l'interval de scan du wifi
 	public static int getWifiScanInterval(Context c)
 	{
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);

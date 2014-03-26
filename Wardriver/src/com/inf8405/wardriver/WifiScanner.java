@@ -153,6 +153,9 @@ public class WifiScanner extends BroadcastReceiver
 	    textView.setTextSize(12);
 	}
 	
+	
+	// Fonction appelée lorsqu'un nouveau wifi est découvert
+	// ou que la distance est plus courte
 	private void newWifiFound(ScanResult r)
 	{
 		// On notifie les observateurs
@@ -163,6 +166,7 @@ public class WifiScanner extends BroadcastReceiver
 	}
 
 
+	// Fonction appelée avec les résultats lorsqu'on scan se termine
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		List<ScanResult> wifiList = mWifiMgr.getScanResults();
