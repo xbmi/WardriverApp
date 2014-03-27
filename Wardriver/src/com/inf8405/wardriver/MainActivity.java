@@ -37,6 +37,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
     private boolean mCompassEnabled = false;
     private Button mBtnCompass;
 
+    
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -61,11 +62,11 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
         // On construit la carte google pour les wifi
         mMap = new WifiMap(getFragmentManager());
         
-        // On contruit le wifi scanner
+        // On contruit le scanner de points d'accès wifi
         mWifiScanner = new WifiScanner(this);
         mWifiScanIntervalMS = SettingsActivity.getWifiScanInterval(this);
         
-        // On contruit le compass
+        // On contruit la boussole
         mCompass = new Compass(this);
         mCompass.setAzimuthOffset( SettingsActivity.getCompassOffset(this) );
         mBtnCompass = (Button) findViewById(R.id.btnCompass);
@@ -90,6 +91,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
 	public void onPause()
 	{
 		super.onPause();
+		
+		// On arrête la boussole si activée
 		if (mCompassEnabled)
 		{
 			mCompass.stop();
@@ -100,6 +103,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
 	public void onResume()
 	{
 		super.onResume();
+		
+		// On redémarre la boussole si activée
 		if (mCompassEnabled)
 		{
 			mCompass.start();
@@ -120,8 +125,10 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
         return super.onOptionsItemSelected(item);
     }
 	
+	// Fonction appelée lorsqu'un item du menu est sélectionné
     private void itemSelected(int pos)
     {
+    	// On vérifie quelle option a été choisie
     	String option = mOptions[pos];
     	if (option.equals( getResources().getString(R.string.menu_record_start)) )
     	{
@@ -156,19 +163,23 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
         	mMap.addWifiMarker(new LatLng(45.585, -73.808), "Test vulnerable", MarkerType.VULNERABLE);
         }
         
+    	// Finalement on ferme le menu
         mDrawerLayout.closeDrawer(mDrawerList);
     }
     
+    // Classe enregistrée auprès du menu pour détecter les sélections
     private class DrawerItemClickListener implements ListView.OnItemClickListener
     {
         @SuppressWarnings("rawtypes")
 		@Override
         public void onItemClick(AdapterView parent, View view, int position, long id)
         {
+        	// On redirige vers une autre méthode
         	itemSelected(position);
         }
     }
     
+    // Fonction de rappel appelée lorsqu'un activité auquel on attendait un résultat a terminé
     @Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
@@ -176,17 +187,17 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
 		switch (requestCode)
 		{
 			case RESULT_SETTINGS_ACTIVITY:
-				// Paramètres ont possiblement été changés, on met à jour
+				// Paramètres ont possiblement été changés, on met les paramètres à jour
 				
 				// Offset de la boussole
 				mCompass.setAzimuthOffset( SettingsActivity.getCompassOffset(this) );
 				if (mCompassEnabled)
 				{
-					mCompass.applyMapRotation();
+					mCompass.notifyOrientation();
 				}
 				Log.i("onActivityResult", "Compass offset: " + SettingsActivity.getCompassOffset(this));
 				
-				// Interval de scan wifi
+				// Interval de scan du wifi
 				mWifiScanIntervalMS = SettingsActivity.getWifiScanInterval(this);
 				if (mWifiScanner.isRunning())
 				{
@@ -198,6 +209,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
 		}
 	}
 
+    // Pour écouter les clicks sur les autes éléments de l'interface
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onClick(View v)
@@ -205,6 +217,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
 		switch (v.getId())
 		{
 			case R.id.btnCompass:
+				// Active ou désactive la rotation automatique de la carte par le capteur d'orientation
 				if (mCompassEnabled)
 				{
 					mCompassEnabled = false;
@@ -216,7 +229,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
 				{
 					mCompassEnabled = true;
 					mBtnCompass.setBackgroundDrawable(getResources().getDrawable(R.drawable.compass_on));
-	            	mCompass.registerMap(mMap);
+	            	mCompass.addListener(mMap);
 	            	mCompass.start();
 				}
 				break;
