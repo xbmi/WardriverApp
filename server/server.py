@@ -6,41 +6,49 @@ import json
 import sys
 import os
 import MySQLdb as mdb
-import pprint
+from threading import Thread
+from time import sleep
 
-class EchoHandler(SocketServer.BaseRequestHandler) :
+
+class Handler(SocketServer.BaseRequestHandler) :
 	def handle(self):
-		#print "Got connection from : " , self.client_address
-		#data = self.request.recv(2048)
-		#print "Client data:", data
-		
-		pprint.pprint(self.client_address)
-
 		print "Got connection from : " , self.client_address
 		data = "foo"
 		while len(data):
-			data = self.request.recv(1024)
-			print "Client data:", data
-			self.request.send(data)
-		print "Client left"
-		#sys.exit()
-		request = '{"SSID": "GRC Surveillance van 42", "BSSID": "20:aa:4b:ff:8c:f9", "secured": "0", "capabilities": "[WPA2-PSK-CCMP+TKIP][WPS][ESS]", "frequency": "2.437", "level": "-71", "distance": "17", "latitude": "45.523365", "longitude": "-73.607073", "altitude": "15", "userid": "1" }'
+			print " === recv"
+			data = self.request.recv(81920)
 
+			if data.strip():
+				file = open("output.json", "w")
+				file.write(data)
+				file.close()
+				#print data
+				t = Thread(target=self.serveur_thread, args=(data,))
+				t.start()
+				self.request.send("200\n")
+			else:
+				print "**** rentre pas"
+		print "Client left" 
+
+	def serveur_thread(self, client_data):
+		print "===== THREAD ====="
 		try:
-			json.loads(request)
+			json.loads(client_data)
 		except ValueError as e:
 			print "ValueError exception caught! JSON parsing problem"
-			#sys.exit()
+		
 
-		if "request" in data:
-			obj_json = json.loads(request)
 
-			con = mdb.connect('localhost', 'wardriver', 'mRC22jrM9d6WJ3N7', 'wardriver')
-			with con:
-				cur = con.cursor()
-				cur.execute("INSERT INTO access_points (SSID,BSSID,secured,capabilities,frequency,level,distance,longitude,latitude,altitude,userId) VALUES(\"GRC Surveillance van 42\", \"20:aa:4b:ff:8c:f9\", \"0\", \"[WPA2-PSK-CCMP+TKIP][WPS][ESS]\", \"2.437\", \"-71\", \"17\", \"45.523365\", \"-73.607073\", \"15\", \"1\")")
-			print "insertion succesful"
+		#obj_json = json.loads(client_data)
+
+		#for wifi in obj_json:
+		#	print obj_son["SSID"]
+		#con = mdb.connect('localhost', 'wardriver', 'mRC22jrM9d6WJ3N7', 'wardriver')
+		#with con:
+		#	cur = con.cursor()
+		#	cur.execute("INSERT INTO access_points (SSID,BSSID,secured,capabilities,frequency,level,distance,longitude,latitude,altitude,userId) VALUES(\"GRC Surveillance van 42\", \"20:aa:4b:ff:8c:f9\", \"0\", \"[WPA2-PSK-CCMP+TKIP][WPS][ESS]\", \"2.437\", \"-71\", \"17\", \"45.523365\", \"-73.607073\", \"15\", \"1\")")
+		#print "insertion succesful"
 
 SocketServer.TCPServer.allow_reuse_address = True
-server = SocketServer.TCPServer(("0.0.0.0", 9000), EchoHandler)
+server = SocketServer.TCPServer(("0.0.0.0", 9000), Handler)
 server.serve_forever()
