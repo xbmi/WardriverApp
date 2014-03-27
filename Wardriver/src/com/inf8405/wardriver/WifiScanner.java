@@ -212,4 +212,8 @@ public class WifiScanner extends BroadcastReceiver
 	    double exp = (80.0 - (20 * Math.log10(freqInMHz)) - signalStrengthInDBm) / 20.0;
 	    return (int)Math.pow(2.0, exp);
 	}
+	
+	public HashMap<String, ScanResult> getWifiList() {
+		return this.mWifiList;
+	}
 }

@@ -166,8 +166,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
         	mMap.addWifiMarker(new LatLng(45.585, -73.808), "Test vulnerable", MarkerType.VULNERABLE);
         }
         else if(option.equals(getResources().getString(R.string.menu_testPush))) {
-        	ClientTCP client = new ClientTCP();
-        	client.connect();
+        	ClientTCP client = new ClientTCP(mWifiScanner.getWifiList());
+        	client.start();
         }
         
     	// Finalement on ferme le menu
