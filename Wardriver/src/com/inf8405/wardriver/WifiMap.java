@@ -12,18 +12,20 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class WifiMap
+public class WifiMap implements CompassListener
 {
 	public enum MarkerType { SECURED, VULNERABLE, UNSECURED };
 	
 	private GoogleMap mMap;
 	
+	// Carte google sur laquelle on indique les points d'accès wifi
 	public WifiMap(FragmentManager fragMgr)
 	{
         mMap = ((MapFragment) fragMgr.findFragmentById(R.id.map)).getMap();
         mMap.setMyLocationEnabled(true);
 	}
 	
+	// Reset l'orientation de la carte vers le Nord
 	public void resetOrientation()
 	{
 		// On remet la caméra droite (vers le nord)
@@ -34,6 +36,7 @@ public class WifiMap
 		mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
 	}
 	
+	// Tourne la carte vers un certain azimuth
 	public void rotateTo(float azimuth)
 	{
 		CameraPosition camPos = CameraPosition.builder(mMap.getCameraPosition())
@@ -43,6 +46,8 @@ public class WifiMap
 		mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
 	}
 	
+	// Ajoute un marqueur sur la carte pour un points d'accès wifi
+	// TODO: ajuster les arguments, ex: les infos wifi ou qqc
 	public void addWifiMarker(LatLng pos, String title, MarkerType type)
 	{
 		// Un marqueur
@@ -50,6 +55,8 @@ public class WifiMap
     		.position(pos)
     		.title(title)
     		.snippet("Click for more info");
+    	
+    	// TODO: checker comment faire pour afficher une page quand on click pour plus d'infos
     	
 		// Marqueur vert pour wifi sécurisé
 		// Marqueur rouge pour wifi non-sécurisé
@@ -72,7 +79,7 @@ public class WifiMap
 				break;
     	}
     	
-    	// Et un cercle pour l'inprécision
+    	// Et un cercle pour l'imprécision (distance selon puissance)
     	CircleOptions circle = new CircleOptions()
 			 .center(pos)
 			 .radius(35) // en mètres
@@ -81,5 +88,12 @@ public class WifiMap
 
     	mMap.addMarker(marker);
     	mMap.addCircle(circle);
+	}
+
+	// Appelé lors d'un changement d'orientation si l'objet actuel est enregistré
+	@Override
+	public void onOrientationChanged(float azimuth)
+	{
+		rotateTo(azimuth);
 	}
 }
