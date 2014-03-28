@@ -3,9 +3,6 @@ package com.inf8405.wardriver;
 import com.google.android.gms.maps.model.LatLng;
 import com.inf8405.wardriver.WifiMap.MarkerType;
 
-import java.io.*;
-import java.net.*;
-
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -165,7 +162,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
         	mMap.addWifiMarker(new LatLng(45.584, -73.807), "Test unsecured", MarkerType.UNSECURED);
         	mMap.addWifiMarker(new LatLng(45.585, -73.808), "Test vulnerable", MarkerType.VULNERABLE);
         }
-        else if(option.equals(getResources().getString(R.string.menu_testPush))) {
+        else if(option.equals(getResources().getString(R.string.menu_testPush)))
+        {
         	ClientTCP client = new ClientTCP(mWifiScanner.getWifiList());
         	client.start();
         }

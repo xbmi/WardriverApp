@@ -15,14 +15,13 @@ import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
-import android.util.Log;
 import android.widget.TextView;
 
 public class WifiScanner extends BroadcastReceiver
 {	
 	private WifiManager mWifiMgr;
 	
-	private HashMap<String, ScanResult> mWifiList = new HashMap<String, ScanResult>();
+	private HashMap<String, WifiInfo> mWifiList = new HashMap<String, WifiInfo>();
 	
 	private LinkedList<WifiListener> listeners = new LinkedList<WifiListener>();
 	
@@ -124,16 +123,15 @@ public class WifiScanner extends BroadcastReceiver
 		String message = "";
 		for (String key : mWifiList.keySet())
 		{
-			ScanResult r = mWifiList.get(key);
-			boolean secured = (r.capabilities.contains("WPA") || r.capabilities.contains("WEP"));
+			WifiInfo r = mWifiList.get(key);
 			
 	    	message +=   ("SSID: " + r.SSID +
 	    			   	  "\nBSSID: " + r.BSSID +
-	    			   	  "\nSecured: " + (secured ? "Yes" : "No") +
+	    			   	  "\nSecured: " + (r.secured ? "Yes" : "No") +
 	    			   	  "\n" + r.capabilities +
 	    			   	  "\nFreq: " + (float)(r.frequency / 1000.0) + " GHz" +
 	    			   	  "\nLevel: " + r.level + " dBm" +
-	    			   	  "\nEstimated distance: " + estimateRouterDistance(r.level, r.frequency) + "m\n\n");
+	    			   	  "\nEstimated distance: " + r.distance + "m\n\n");
 		}
 		
 		AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -156,12 +154,12 @@ public class WifiScanner extends BroadcastReceiver
 	
 	// Fonction appelée lorsqu'un nouveau wifi est découvert
 	// ou que la distance est plus courte
-	private void newWifiFound(ScanResult r)
+	private void newWifiFound(WifiInfo info)
 	{
 		// On notifie les observateurs
 		for (WifiListener l : listeners)
 		{
-			l.onNewWifiFound(r);
+			l.onNewWifiFound(info);
 		}
 	}
 
@@ -174,20 +172,27 @@ public class WifiScanner extends BroadcastReceiver
 		{
 			// SSID + " " + BSSID va être la clé unique représentant un wifi
 			String key = r.SSID + " " + r.BSSID;
+			WifiInfo newInfo = new WifiInfo(r);
 			
-			if (mWifiList.get(key) == null)
+			WifiInfo oldInfo = mWifiList.get(key);
+			if (oldInfo == null)
 			{
-				// Nouveau wifi inconnu!
-				newWifiFound(r);
+				// Nouveau wifi inconnu! On ajoute à la liste
+				mWifiList.put(key, newInfo);
+				
+				// On notifie les observateurs
+				newWifiFound(newInfo);
 			}
-			
-			// On ajoute / met à jour la liste
-			// TODO: vérifier si la distance est plus petite qu'avant -> updater
-			mWifiList.put(key, r);
+			else
+			{
+				// Existe déjà
+				if (newInfo.distance < oldInfo.distance)
+				{
+					// Distance plus courte (donc meilleure précision) -> on met à jour
+					mWifiList.put(key, newInfo);
+				}
+			}
 		}
-		
-		// FIXME: temporaire, enlever
-		Log.i("WifiScanner", "Scan result received!");
 		
 		if (mIntervalMS == 0)
 		{
@@ -198,22 +203,8 @@ public class WifiScanner extends BroadcastReceiver
 		}
 	}
 	
-	
-	// Fonction qui estime la distance d'un routeur de maison en fonction de la
-	// force du signal (dBm) et sa fréquence (MHz). Retourne la distance approx en mètres.
-	public int estimateRouterDistance(double signalStrengthInDBm, double freqInMHz)
+	public HashMap<String, WifiInfo> getWifiList()
 	{
-		// Formule originale pour "Free-space path loss in decibels"
-	    //double exp = (27.55 - (20 * Math.log10(freqInMHz)) - signalStrengthInDBm) / 20.0;
-	    //return Math.pow(10.0, exp);
-	    
-		// Formule modifiée par nous pour prendre compte que les routeur sont généralement
-		// dans des maisons avec plusieurs murs qui réduit rapidement la distance
-	    double exp = (80.0 - (20 * Math.log10(freqInMHz)) - signalStrengthInDBm) / 20.0;
-	    return (int)Math.pow(2.0, exp);
-	}
-	
-	public HashMap<String, ScanResult> getWifiList() {
-		return this.mWifiList;
+		return mWifiList;
 	}
 }

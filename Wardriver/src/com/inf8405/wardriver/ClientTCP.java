@@ -2,7 +2,6 @@ package com.inf8405.wardriver;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -13,16 +12,14 @@ import java.util.HashMap;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.net.wifi.ScanResult;
-
 public class ClientTCP {
 	private String serverIpAddr = "192.168.1.115";
 	private int serverPort = 9000;
 	private Socket socket;
-	private HashMap<String, ScanResult> wifiMap;
+	private HashMap<String, WifiInfo> wifiMap;
 	
 	
-	public ClientTCP(HashMap<String, ScanResult> wifiMap) {
+	public ClientTCP(HashMap<String, WifiInfo> wifiMap) {
 		this.wifiMap = wifiMap;
 	}
 	
@@ -43,24 +40,23 @@ public class ClientTCP {
 				BufferedReader in = new BufferedReader(input);
 				
 				// Hardcoder
-				// TODO: Hashmap des wifis dans WifiScanner qui contient deja ces infos la (exemple: pas de nouveau calcul de frequence a faire
 				JSONObject wifiListJSON = new JSONObject();
 				int i = 0;
 				for (String key : wifiMap.keySet())
 				{
-					ScanResult r = wifiMap.get(key);
+					WifiInfo r = wifiMap.get(key);
 					JSONObject wifiNetwork = new JSONObject();
 					wifiNetwork.put("SSID", r.SSID);
 					wifiNetwork.put("BSSID", r.BSSID);
-					wifiNetwork.put("secured", (r.capabilities.contains("WPA") || r.capabilities.contains("WEP")));
+					wifiNetwork.put("secured", r.secured);
 					wifiNetwork.put("capabilities", r.capabilities);
-					wifiNetwork.put("frequency", Float.toString((float)(r.frequency / 1000.0)));
+					wifiNetwork.put("frequency", r.frequency);
 					wifiNetwork.put("level", r.level);
-					wifiNetwork.put("distance", "999");
-					wifiNetwork.put("latitude", "-10");
-					wifiNetwork.put("longitude", "-10");
-					wifiNetwork.put("altitude", "-10");
-					wifiNetwork.put("userId", "1");
+					wifiNetwork.put("distance", r.distance);
+					wifiNetwork.put("latitude", r.latitude);
+					wifiNetwork.put("longitude", r.longitude);
+					wifiNetwork.put("altitude", r.altitude);
+					wifiNetwork.put("userId", "1"); // c'est quoi? ca pas rapport ak le wifi j'imagine?
 					wifiListJSON.put("wifi_" + Integer.toString(i), wifiNetwork);
 					i += 1;
 				}
