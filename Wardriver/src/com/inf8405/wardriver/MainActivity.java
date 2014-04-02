@@ -1,7 +1,6 @@
 package com.inf8405.wardriver;
 
-import com.google.android.gms.maps.model.LatLng;
-import com.inf8405.wardriver.WifiMap.MarkerType;
+import java.util.HashMap;
 
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -19,7 +18,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 
-public class MainActivity extends ActionBarActivity implements OnClickListener
+public class MainActivity extends ActionBarActivity implements OnClickListener, WifiListener
 {
 	private static final int RESULT_SETTINGS_ACTIVITY = 1;
 	
@@ -27,6 +26,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
+    
+    private HashMap<String, WifiInfo> mWifiList = new HashMap<String, WifiInfo>();
     
     private WifiMap mMap;
     
@@ -64,6 +65,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
         
         // On contruit le scanner de points d'accès wifi
         mWifiScanner = new WifiScanner(this);
+        mWifiScanner.addListener(this);
         mWifiScanIntervalMS = SettingsActivity.getWifiScanInterval(this);
         
         // On contruit la boussole
@@ -153,18 +155,16 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
     		}
     		else
     		{
-    			mWifiScanner.start(this, 0); //FIXME: 0 temporaire, mettre mWifiScanIntervalMS
+    			mWifiScanner.start(this, mWifiScanIntervalMS);
     		}
     	}
         else if (option.equals( getResources().getString(R.string.menu_testPins)) ) // Temporaire!
         {
-        	mMap.addWifiMarker(new LatLng(45.583, -73.806), "Test secure", MarkerType.SECURED);
-        	mMap.addWifiMarker(new LatLng(45.584, -73.807), "Test unsecured", MarkerType.UNSECURED);
-        	mMap.addWifiMarker(new LatLng(45.585, -73.808), "Test vulnerable", MarkerType.VULNERABLE);
+        	mMap.clear();
         }
         else if(option.equals(getResources().getString(R.string.menu_testPush)))
         {
-        	ClientTCP client = new ClientTCP(mWifiScanner.getWifiList());
+        	ClientTCP client = new ClientTCP(mWifiList);
         	client.start();
         }
         
@@ -238,6 +238,35 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
 	            	mCompass.start();
 				}
 				break;
+		}
+	}
+
+	@Override
+	public void onNewWifiFound(WifiInfo newInfo)
+	{
+		// On vérifie si existe déjà dans la liste ou non
+		WifiInfo oldInfo = mWifiList.get(newInfo.BSSID);
+		if (oldInfo == null)
+		{
+			// Inconu, on ajoute
+			mWifiList.put(newInfo.BSSID, newInfo);
+			
+			// TODO: get la position actuelle du GPS
+			
+			mMap.addWifiMarker(newInfo);
+			
+			// TODO: ajouter à la BD locale
+		}
+		else if (newInfo.distance < oldInfo.distance)
+		{
+			// Existe, mais la distance est plus courte donc meilleure précision => on update
+			mWifiList.put(newInfo.BSSID, newInfo);
+			
+			// TODO: get la position actuelle du GPS
+			
+			mMap.addWifiMarker(newInfo);
+			
+			// TODO: ajouter à la DB locale
 		}
 	}
 }
