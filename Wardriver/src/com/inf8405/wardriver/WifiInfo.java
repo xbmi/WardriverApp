@@ -16,6 +16,9 @@ public class WifiInfo
 	public double altitude = 0;
 	public int userId = 0;
 	
+	public WifiInfo() {
+	}
+	
 	public WifiInfo(ScanResult r)
 	{
 		SSID = r.SSID;

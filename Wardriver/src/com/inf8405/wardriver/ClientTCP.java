@@ -16,7 +16,7 @@ import android.content.Context;
 import android.provider.Settings.Secure;
 
 public class ClientTCP {
-	private String serverIpAddr = "192.168.1.115";
+	private String serverIpAddr = "soju.no-ip.biz";
 	private int serverPort = 9000;
 	private Socket socket;
 	private HashMap<String, WifiInfo> wifiMap;

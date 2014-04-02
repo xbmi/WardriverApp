@@ -18,6 +18,8 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 
+import com.inf8405.wardriver.LocalDatabase;
+
 public class MainActivity extends ActionBarActivity implements OnClickListener, WifiListener
 {
 	private static final int RESULT_SETTINGS_ACTIVITY = 1;
@@ -73,6 +75,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         mCompass.setAzimuthOffset( SettingsActivity.getCompassOffset(this) );
         mBtnCompass = (Button) findViewById(R.id.btnCompass);
         mBtnCompass.setOnClickListener(this);
+        
+        mWifiList = LocalDatabase.getInstance(this).getAllAccessPoints();
 	}
 	
 	@Override
@@ -164,7 +168,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         }
         else if(option.equals(getResources().getString(R.string.menu_testPush)))
         {
-        	ClientTCP client = new ClientTCP(mWifiList);
+        	ClientTCP client = new ClientTCP(mWifiList, this);
         	client.start();
         }
         
@@ -255,7 +259,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			
 			mMap.addWifiMarker(newInfo);
 			
-			// TODO: ajouter à la BD locale
+			// ajouter à la BD locale
+			LocalDatabase.getInstance(this).insertAccessPoint(newInfo);
 		}
 		else if (newInfo.distance < oldInfo.distance)
 		{
@@ -266,7 +271,9 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			
 			mMap.addWifiMarker(newInfo);
 			
-			// TODO: ajouter à la DB locale
+			// ajouter à la BD locale
+			LocalDatabase.getInstance(this).removeAccessPoint(newInfo);
+			LocalDatabase.getInstance(this).insertAccessPoint(newInfo);
 		}
 	}
 }
