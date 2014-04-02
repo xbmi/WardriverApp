@@ -2,6 +2,8 @@ package com.inf8405.wardriver;
 
 import java.util.HashMap;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -114,6 +116,32 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	}
 	
 	@Override
+	public void onBackPressed()
+	{
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Quit Wardriver")
+			   .setMessage("Do you really want to leave the app? The scanning will be stopped.")
+			   .setCancelable(false)
+			   .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						if (mWifiScanner.isRunning())
+						{
+							mWifiScanner.stop(MainActivity.this);
+						}
+						finish();
+					}
+			   })
+			   .setNegativeButton("No", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+			   });
+	    builder.show();	
+	}
+	
+	@Override
     public boolean onOptionsItemSelected(MenuItem item)
 	{
 		if (mDrawerLayout.isDrawerOpen(mDrawerList))
@@ -134,11 +162,27 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
     	String option = mOptions[pos];
     	if (option.equals( getResources().getString(R.string.menu_record_start)) )
     	{
+    		// On démarre le scanneur
+    		if (!mWifiScanner.isRunning())
+    		{
+    			mWifiScanner.start(this, mWifiScanIntervalMS);
+    			Log.i("Main", "Wifi scanner started, interval: " + mWifiScanIntervalMS);
+    		}
+    		
+    		// On change le menu pour "stop"
     		mOptions[pos] = getResources().getString(R.string.menu_record_stop);
     		mDrawerList.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_list, mOptions));
     	}
     	else if (option.equals( getResources().getString(R.string.menu_record_stop)) )
     	{
+    		// On arrête le scanner
+    		if (mWifiScanner.isRunning())
+    		{
+    			mWifiScanner.stop(this);
+    			Log.i("Main", "Wifi scanner stopped");
+    		}
+    		
+    		// On change le menu pour "start"
     		mOptions[pos] = getResources().getString(R.string.menu_record_start);
     		mDrawerList.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_list, mOptions));
     	}
@@ -147,24 +191,9 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
     		Intent intent = new Intent(this, SettingsActivity.class);
     		this.startActivityForResult(intent, RESULT_SETTINGS_ACTIVITY);
     	}
-    	else if (option.equals( getResources().getString(R.string.menu_testWifi)) ) // Temporaire!
-    	{
-    		if (mWifiScanner.isRunning())
-    		{
-    			mWifiScanner.stop(this);
-    		}
-    		else
-    		{
-    			mWifiScanner.start(this, mWifiScanIntervalMS);
-    		}
-    	}
-        else if (option.equals( getResources().getString(R.string.menu_testPins)) ) // Temporaire!
-        {
-        	mMap.clear();
-        }
         else if(option.equals(getResources().getString(R.string.menu_testPush)))
         {
-        	ClientTCP client = new ClientTCP(mWifiList);
+        	ClientTCP client = new ClientTCP(mWifiList, this);
         	client.start();
         }
         
@@ -248,6 +277,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		WifiInfo oldInfo = mWifiList.get(newInfo.BSSID);
 		if (oldInfo == null)
 		{
+			Log.i("Main", "New wifi: " + newInfo.SSID + " [" + newInfo.BSSID + "]");
+			
 			// Inconu, on ajoute
 			mWifiList.put(newInfo.BSSID, newInfo);
 			
@@ -259,6 +290,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		}
 		else if (newInfo.distance < oldInfo.distance)
 		{
+			Log.i("Main", "Update wifi: " + newInfo.SSID + " [" + newInfo.BSSID + "]");
+			
 			// Existe, mais la distance est plus courte donc meilleure précision => on update
 			mWifiList.put(newInfo.BSSID, newInfo);
 			

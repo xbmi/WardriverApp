@@ -4,8 +4,6 @@
     <string-array name="menu_options">
         <item>@string/menu_record_start</item>
         <item>@string/menu_options</item>
-        <item>@string/menu_testWifi</item>
-        <item>@string/menu_testPins</item>
         <item>@string/menu_testPush</item>
     </string-array>
     
