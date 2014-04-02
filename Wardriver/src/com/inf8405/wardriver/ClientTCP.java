@@ -12,15 +12,19 @@ import java.util.HashMap;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.content.Context;
+import android.provider.Settings.Secure;
+
 public class ClientTCP {
 	private String serverIpAddr = "192.168.1.115";
 	private int serverPort = 9000;
 	private Socket socket;
 	private HashMap<String, WifiInfo> wifiMap;
+	private Context context;
 	
-	
-	public ClientTCP(HashMap<String, WifiInfo> wifiMap) {
+	public ClientTCP(HashMap<String, WifiInfo> wifiMap, Context context) {
 		this.wifiMap = wifiMap;
+		this.context = context;
 	}
 	
 	public void start() {
@@ -56,7 +60,7 @@ public class ClientTCP {
 					wifiNetwork.put("latitude", r.latitude);
 					wifiNetwork.put("longitude", r.longitude);
 					wifiNetwork.put("altitude", r.altitude);
-					wifiNetwork.put("userId", "1"); // c'est quoi? ca pas rapport ak le wifi j'imagine?
+					//wifiNetwork.put("androidId", Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
 					wifiListJSON.put("wifi_" + Integer.toString(i), wifiNetwork);
 					i += 1;
 				}

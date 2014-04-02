@@ -1,10 +1,13 @@
 package com.inf8405.wardriver;
 
+import java.util.HashMap;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.inf8405.wardriver.WifiMap.MarkerType;
 
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
@@ -164,7 +167,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
         }
         else if(option.equals(getResources().getString(R.string.menu_testPush)))
         {
-        	ClientTCP client = new ClientTCP(mWifiScanner.getWifiList());
+        	HashMap<String, WifiInfo> tmp = mWifiScanner.getWifiList();
+        	ClientTCP client = new ClientTCP(mWifiScanner.getWifiList(), this);
         	client.start();
         }
         
