@@ -1,11 +1,10 @@
 package com.inf8405.wardriver;
 
-import com.google.android.gms.maps.model.LatLng;
-import com.inf8405.wardriver.WifiMap.MarkerType;
-import com.inf8405.wardriver.TheLocationListener;
+import java.util.HashMap;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.location.Criteria;
@@ -25,7 +24,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 
-public class MainActivity extends ActionBarActivity implements OnClickListener
+import com.inf8405.wardriver.LocalDatabase;
+
+public class MainActivity extends ActionBarActivity implements OnClickListener, WifiListener
 {
 	private static final int RESULT_SETTINGS_ACTIVITY = 1;
 	
@@ -33,6 +34,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
+    
+    private HashMap<String, WifiInfo> mWifiList = new HashMap<String, WifiInfo>();
     
     private WifiMap mMap;
     
@@ -72,6 +75,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
         
         // On contruit le scanner de points d'accès wifi
         mWifiScanner = new WifiScanner(this);
+        mWifiScanner.addListener(this);
         mWifiScanIntervalMS = SettingsActivity.getWifiScanInterval(this);
         
         // On contruit la boussole
@@ -83,6 +87,13 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
         //On construit le listener pour la position
         
 		mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        
+        // Load la base de donnée locale et met à jour la carte
+        mWifiList = LocalDatabase.getInstance(this).getAllAccessPoints();
+        for (String key : mWifiList.keySet())
+        {
+        	mMap.addWifiMarker(mWifiList.get(key));
+        }
 	}
 	
 	@Override
@@ -124,6 +135,32 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
 	}
 	
 	@Override
+	public void onBackPressed()
+	{
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Quit Wardriver")
+			   .setMessage("Do you really want to leave the app? The scanning will be stopped.")
+			   .setCancelable(false)
+			   .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						if (mWifiScanner.isRunning())
+						{
+							mWifiScanner.stop(MainActivity.this);
+						}
+						finish();
+					}
+			   })
+			   .setNegativeButton("No", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+			   });
+	    builder.show();	
+	}
+	
+	@Override
     public boolean onOptionsItemSelected(MenuItem item)
 	{
 		if (mDrawerLayout.isDrawerOpen(mDrawerList))
@@ -144,11 +181,27 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
     	String option = mOptions[pos];
     	if (option.equals( getResources().getString(R.string.menu_record_start)) )
     	{
+    		// On démarre le scanneur
+    		if (!mWifiScanner.isRunning())
+    		{
+    			mWifiScanner.start(this, mWifiScanIntervalMS);
+    			Log.i("Main", "Wifi scanner started, interval: " + mWifiScanIntervalMS);
+    		}
+    		
+    		// On change le menu pour "stop"
     		mOptions[pos] = getResources().getString(R.string.menu_record_stop);
     		mDrawerList.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_list, mOptions));
     	}
     	else if (option.equals( getResources().getString(R.string.menu_record_stop)) )
     	{
+    		// On arrête le scanner
+    		if (mWifiScanner.isRunning())
+    		{
+    			mWifiScanner.stop(this);
+    			Log.i("Main", "Wifi scanner stopped");
+    		}
+    		
+    		// On change le menu pour "start"
     		mOptions[pos] = getResources().getString(R.string.menu_record_start);
     		mDrawerList.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_list, mOptions));
     	}
@@ -157,26 +210,9 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
     		Intent intent = new Intent(this, SettingsActivity.class);
     		this.startActivityForResult(intent, RESULT_SETTINGS_ACTIVITY);
     	}
-    	else if (option.equals( getResources().getString(R.string.menu_testWifi)) ) // Temporaire!
-    	{
-    		if (mWifiScanner.isRunning())
-    		{
-    			mWifiScanner.stop(this);
-    		}
-    		else
-    		{
-    			mWifiScanner.start(this, 0); //FIXME: 0 temporaire, mettre mWifiScanIntervalMS
-    		}
-    	}
-        else if (option.equals( getResources().getString(R.string.menu_testPins)) ) // Temporaire!
-        {
-        	mMap.addWifiMarker(new LatLng(45.583, -73.806), "Test secure", MarkerType.SECURED);
-        	mMap.addWifiMarker(new LatLng(45.584, -73.807), "Test unsecured", MarkerType.UNSECURED);
-        	mMap.addWifiMarker(new LatLng(45.585, -73.808), "Test vulnerable", MarkerType.VULNERABLE);
-        }
         else if(option.equals(getResources().getString(R.string.menu_testPush)))
         {
-        	ClientTCP client = new ClientTCP(mWifiScanner.getWifiList());
+        	ClientTCP client = new ClientTCP(mWifiList, this);
         	client.start();
         }
         else if(option.equals(getResources().getString(R.string.info_gps)));
@@ -264,6 +300,42 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
 	            	mCompass.start();
 				}
 				break;
+		}
+	}
+
+	@Override
+	public void onNewWifiFound(WifiInfo newInfo)
+	{
+		// On vérifie si existe déjà dans la liste ou non
+		WifiInfo oldInfo = mWifiList.get(newInfo.BSSID);
+		if (oldInfo == null)
+		{
+			Log.i("Main", "New wifi: " + newInfo.SSID + " [" + newInfo.BSSID + "]");
+			
+			// Inconu, on ajoute
+			mWifiList.put(newInfo.BSSID, newInfo);
+			
+			// TODO: get la position actuelle du GPS
+			
+			mMap.addWifiMarker(newInfo);
+			
+			// ajouter à la BD locale
+			LocalDatabase.getInstance(this).insertAccessPoint(newInfo);
+		}
+		else if (newInfo.distance < oldInfo.distance)
+		{
+			Log.i("Main", "Update wifi: " + newInfo.SSID + " [" + newInfo.BSSID + "]");
+			
+			// Existe, mais la distance est plus courte donc meilleure précision => on update
+			mWifiList.put(newInfo.BSSID, newInfo);
+			
+			// TODO: get la position actuelle du GPS
+			
+			mMap.addWifiMarker(newInfo);
+			
+			// met à jour dans la BD locale
+			LocalDatabase.getInstance(this).removeAccessPoint(newInfo);
+			LocalDatabase.getInstance(this).insertAccessPoint(newInfo);
 		}
 	}
 }
