@@ -7,7 +7,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.database.sqlite.SQLiteDatabase.CursorFactory;
 
 public class LocalDatabase extends SQLiteOpenHelper {
 	private static final int VERSION_BDD = 1;
@@ -80,9 +79,7 @@ public class LocalDatabase extends SQLiteOpenHelper {
 	}
 	
 	public boolean removeAccessPoint(WifiInfo wf) {
-		String query = "DELETE FROM " + TABLE_ACCESS_POINTS + " WHERE BSSID = " + wf.BSSID;
-	    Cursor c = db_read.rawQuery(query, null);
-	    return db_write.delete(TABLE_ACCESS_POINTS, COL_BSSID + "=" + wf.BSSID, null) > 0;
+	    return db_write.delete(TABLE_ACCESS_POINTS, COL_BSSID + " = ?", new String[]{ wf.BSSID }) > 0;
 	}
 	
 	public long insertAccessPoint(WifiInfo wf) {

@@ -78,7 +78,12 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         mBtnCompass = (Button) findViewById(R.id.btnCompass);
         mBtnCompass.setOnClickListener(this);
         
+        // Load la base de donnée locale et met à jour la carte
         mWifiList = LocalDatabase.getInstance(this).getAllAccessPoints();
+        for (String key : mWifiList.keySet())
+        {
+        	mMap.addWifiMarker(mWifiList.get(key));
+        }
 	}
 	
 	@Override
@@ -304,7 +309,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			
 			mMap.addWifiMarker(newInfo);
 			
-			// ajouter à la BD locale
+			// met à jour dans la BD locale
 			LocalDatabase.getInstance(this).removeAccessPoint(newInfo);
 			LocalDatabase.getInstance(this).insertAccessPoint(newInfo);
 		}
