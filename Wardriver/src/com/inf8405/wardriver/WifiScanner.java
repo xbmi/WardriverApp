@@ -1,27 +1,19 @@
 package com.inf8405.wardriver;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
-import android.widget.TextView;
 
 public class WifiScanner extends BroadcastReceiver
 {	
 	private WifiManager mWifiMgr;
-	
-	private HashMap<String, WifiInfo> mWifiList = new HashMap<String, WifiInfo>();
 	
 	private LinkedList<WifiListener> listeners = new LinkedList<WifiListener>();
 	
@@ -117,39 +109,39 @@ public class WifiScanner extends BroadcastReceiver
 	}
 	
 	// FIXME: temporaire, pour tester
-	private void listAllWifis(Context context)
-	{
-		// Gros dialog temporaire pour tester
-		String message = "";
-		for (String key : mWifiList.keySet())
-		{
-			WifiInfo r = mWifiList.get(key);
-			
-	    	message +=   ("SSID: " + r.SSID +
-	    			   	  "\nBSSID: " + r.BSSID +
-	    			   	  "\nSecured: " + (r.secured ? "Yes" : "No") +
-	    			   	  "\n" + r.capabilities +
-	    			   	  "\nFreq: " + (float)(r.frequency / 1000.0) + " GHz" +
-	    			   	  "\nLevel: " + r.level + " dBm" +
-	    			   	  "\nEstimated distance: " + r.distance + "m\n\n");
-		}
-		
-		AlertDialog.Builder builder = new AlertDialog.Builder(context);
-	    builder.setTitle("Wi-Fi list")
-	           .setCancelable(false)
-	    	   .setMessage(message)
-	    	   .setPositiveButton("OK", new OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				});
-	    final Dialog d = builder.create();
-	    d.show();
-	    
-	    TextView textView = (TextView) d.findViewById(android.R.id.message);
-	    textView.setTextSize(12);
-	}
+//	private void listAllWifis(Context context)
+//	{
+//		// Gros dialog temporaire pour tester
+//		String message = "";
+//		for (String key : mWifiList.keySet())
+//		{
+//			WifiInfo r = mWifiList.get(key);
+//			
+//	    	message +=   ("SSID: " + r.SSID +
+//	    			   	  "\nBSSID: " + r.BSSID +
+//	    			   	  "\nSecured: " + (r.secured ? "Yes" : "No") +
+//	    			   	  "\n" + r.capabilities +
+//	    			   	  "\nFreq: " + (float)(r.frequency / 1000.0) + " GHz" +
+//	    			   	  "\nLevel: " + r.level + " dBm" +
+//	    			   	  "\nEstimated distance: " + r.distance + "m\n\n");
+//		}
+//		
+//		AlertDialog.Builder builder = new AlertDialog.Builder(context);
+//	    builder.setTitle("Wi-Fi list")
+//	           .setCancelable(false)
+//	    	   .setMessage(message)
+//	    	   .setPositiveButton("OK", new OnClickListener() {
+//					@Override
+//					public void onClick(DialogInterface dialog, int which) {
+//						dialog.dismiss();
+//					}
+//				});
+//	    final Dialog d = builder.create();
+//	    d.show();
+//	    
+//	    TextView textView = (TextView) d.findViewById(android.R.id.message);
+//	    textView.setTextSize(12);
+//	}
 	
 	
 	// Fonction appelée lorsqu'un nouveau wifi est découvert
@@ -170,28 +162,8 @@ public class WifiScanner extends BroadcastReceiver
 		List<ScanResult> wifiList = mWifiMgr.getScanResults();
 		for (ScanResult r : wifiList)
 		{
-			// SSID + " " + BSSID va être la clé unique représentant un wifi
-			String key = r.SSID + " " + r.BSSID;
-			WifiInfo newInfo = new WifiInfo(r);
-			
-			WifiInfo oldInfo = mWifiList.get(key);
-			if (oldInfo == null)
-			{
-				// Nouveau wifi inconnu! On ajoute à la liste
-				mWifiList.put(key, newInfo);
-				
-				// On notifie les observateurs
-				newWifiFound(newInfo);
-			}
-			else
-			{
-				// Existe déjà
-				if (newInfo.distance < oldInfo.distance)
-				{
-					// Distance plus courte (donc meilleure précision) -> on met à jour
-					mWifiList.put(key, newInfo);
-				}
-			}
+			WifiInfo info = new WifiInfo(r);
+			newWifiFound(info);
 		}
 		
 		if (mIntervalMS == 0)
@@ -199,12 +171,6 @@ public class WifiScanner extends BroadcastReceiver
 			// On ne répète pas, on stoppe
 			mRunning = false;
 			context.unregisterReceiver(this);
-			listAllWifis(context); // FIXME: Temporaire pour tester
 		}
-	}
-	
-	public HashMap<String, WifiInfo> getWifiList()
-	{
-		return mWifiList;
 	}
 }
