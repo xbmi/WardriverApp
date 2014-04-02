@@ -2,9 +2,15 @@ package com.inf8405.wardriver;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.inf8405.wardriver.WifiMap.MarkerType;
+import com.inf8405.wardriver.TheLocationListener;
 
+import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
@@ -36,6 +42,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
     private Compass mCompass;
     private boolean mCompassEnabled = false;
     private Button mBtnCompass;
+    
+    private LocationManager mLocationManager; 
 
     
 	@Override
@@ -71,6 +79,10 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
         mCompass.setAzimuthOffset( SettingsActivity.getCompassOffset(this) );
         mBtnCompass = (Button) findViewById(R.id.btnCompass);
         mBtnCompass.setOnClickListener(this);
+        
+        //On construit le listener pour la position
+        
+		mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 	}
 	
 	@Override
@@ -167,7 +179,21 @@ public class MainActivity extends ActionBarActivity implements OnClickListener
         	ClientTCP client = new ClientTCP(mWifiScanner.getWifiList());
         	client.start();
         }
-        
+        else if(option.equals(getResources().getString(R.string.info_gps)));
+    	{
+			Criteria criteria = new Criteria();
+			String bestProvider = mLocationManager.getBestProvider(criteria, false);
+			Location location = mLocationManager.getLastKnownLocation(bestProvider);
+			
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+	        builder.setTitle("GPS Infos");
+		    builder.setMessage("Latitude: " + location.getLatitude() + "\nLongitude: " + location.getLongitude() + "\nAltitude: " + location.getAltitude() + "\nSpeed: "+location.getSpeed() );
+		    builder.setPositiveButton("OK", null);
+	        builder.setCancelable(false);
+	    	AlertDialog alert = builder.create();
+		    alert.show();
+    		
+    	}
     	// Finalement on ferme le menu
         mDrawerLayout.closeDrawer(mDrawerList);
     }

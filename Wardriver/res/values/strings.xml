@@ -14,5 +14,7 @@
     
     <string name="pref_key_compass_offset">pref_key_compass_offset</string>
     <string name="pref_key_wifi_scanrate">pref_key_wifi_scanrate</string>
+    
+    <string name="info_gps">GPS infos</string>
 
 </resources>
