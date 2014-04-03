@@ -90,9 +90,14 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
 		else
 		{
 			// N'existe pas, on ajoute un nouveau
+			String title = w.SSID;
+			if (title.isEmpty())
+			{
+				title = "No SSID (hidden)";
+			}
 	    	MarkerOptions marker = new MarkerOptions()
 	    		.position(new LatLng(w.latitude, w.longitude))
-	    		.title(w.SSID)
+	    		.title(title)
 	    		.snippet("Click for more info");
 	    	
 			// Marqueur vert pour wifi sécurisé
