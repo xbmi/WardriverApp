@@ -108,41 +108,6 @@ public class WifiScanner extends BroadcastReceiver
 		}
 	}
 	
-	// FIXME: temporaire, pour tester
-//	private void listAllWifis(Context context)
-//	{
-//		// Gros dialog temporaire pour tester
-//		String message = "";
-//		for (String key : mWifiList.keySet())
-//		{
-//			WifiInfo r = mWifiList.get(key);
-//			
-//	    	message +=   ("SSID: " + r.SSID +
-//	    			   	  "\nBSSID: " + r.BSSID +
-//	    			   	  "\nSecured: " + (r.secured ? "Yes" : "No") +
-//	    			   	  "\n" + r.capabilities +
-//	    			   	  "\nFreq: " + (float)(r.frequency / 1000.0) + " GHz" +
-//	    			   	  "\nLevel: " + r.level + " dBm" +
-//	    			   	  "\nEstimated distance: " + r.distance + "m\n\n");
-//		}
-//		
-//		AlertDialog.Builder builder = new AlertDialog.Builder(context);
-//	    builder.setTitle("Wi-Fi list")
-//	           .setCancelable(false)
-//	    	   .setMessage(message)
-//	    	   .setPositiveButton("OK", new OnClickListener() {
-//					@Override
-//					public void onClick(DialogInterface dialog, int which) {
-//						dialog.dismiss();
-//					}
-//				});
-//	    final Dialog d = builder.create();
-//	    d.show();
-//	    
-//	    TextView textView = (TextView) d.findViewById(android.R.id.message);
-//	    textView.setTextSize(12);
-//	}
-	
 	
 	// Fonction appelée lorsqu'un nouveau wifi est découvert
 	// ou que la distance est plus courte

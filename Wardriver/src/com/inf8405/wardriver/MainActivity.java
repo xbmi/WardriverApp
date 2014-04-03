@@ -20,10 +20,11 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.inf8405.wardriver.LocalDatabase;
 
-public class MainActivity extends ActionBarActivity implements OnClickListener, WifiListener
+public class MainActivity extends ActionBarActivity implements OnClickListener, WifiListener, WifiMapClickListener
 {
 	private static final int RESULT_SETTINGS_ACTIVITY = 1;
 	
@@ -68,6 +69,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         
         // On construit la carte google pour les wifi
         mMap = new WifiMap(getFragmentManager());
+        mMap.addWifiClickListener(this);
         
         // On contruit le scanner de points d'accès wifi
         mWifiScanner = new WifiScanner(this);
@@ -87,7 +89,6 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         mWifiList = LocalDatabase.getInstance(this).getAllAccessPoints();
         for (String key : mWifiList.keySet())
         {
-        	Log.i("Main", "Restored: " + key);
         	mMap.setWifiMarker(mWifiList.get(key));
         }
 	}
@@ -340,5 +341,31 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			LocalDatabase.getInstance(this).removeAccessPoint(newInfo);
 			LocalDatabase.getInstance(this).insertAccessPoint(newInfo);
 		}
+	}
+
+	@Override
+	public void onMarkerClick(String wifiBSSID)
+	{
+		WifiInfo w = mWifiList.get(wifiBSSID);
+
+		String info = "SSID: " + w.SSID +
+					  "\nBSSID: " + w.BSSID +
+					  "\nSecured: "	+ (w.secured ? "Yes" : "No") +
+					  "\n" + w.capabilities +
+					  "\nFreq: " + (float) (w.frequency / 1000.0) + " GHz" +
+					  "\nLevel where captured: " + w.level + " dBm" +
+					  "\nLatitude: " + w.latitude +
+					  "\nLongitude: " + w.longitude +
+					  "\nAltitude: " + (int)w.altitude + "m";
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Access point informations")
+			   .setMessage(info)
+			   .setCancelable(false).setPositiveButton("OK", null);
+		final AlertDialog d = builder.create();
+		d.show();
+
+		TextView textView = (TextView) d.findViewById(android.R.id.message);
+		textView.setTextSize(14);
 	}
 }
