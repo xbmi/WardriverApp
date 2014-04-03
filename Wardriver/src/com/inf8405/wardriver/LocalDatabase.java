@@ -92,8 +92,8 @@ public class LocalDatabase extends SQLiteOpenHelper {
 		values.put(COL_FREQUENCY, wf.frequency);
 		values.put(COL_LEVEL, wf.level);
 		values.put(COL_DISTANCE, wf.distance);
-		values.put(COL_LONGITUDE, wf.latitude);
-		values.put(COL_LATITUDE, wf.longitude);
+		values.put(COL_LONGITUDE, wf.longitude);
+		values.put(COL_LATITUDE, wf.latitude);
 		values.put(COL_ALTITUDE, wf.altitude);
 		
 		return db_write.insert(TABLE_ACCESS_POINTS, null, values);

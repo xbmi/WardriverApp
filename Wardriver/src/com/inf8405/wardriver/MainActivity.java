@@ -3,13 +3,10 @@ package com.inf8405.wardriver;
 import java.util.HashMap;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.location.Criteria;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
@@ -45,9 +42,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
     private Compass mCompass;
     private boolean mCompassEnabled = false;
     private Button mBtnCompass;
-    
-    private LocationManager mLocationManager; 
 
+    private GPS mGPS;
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -85,14 +81,14 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         mBtnCompass.setOnClickListener(this);
         
         //On construit le listener pour la position
-        
-		mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        mGPS = new GPS(this);
         
         // Load la base de donnée locale et met à jour la carte
         mWifiList = LocalDatabase.getInstance(this).getAllAccessPoints();
         for (String key : mWifiList.keySet())
         {
-        	mMap.addWifiMarker(mWifiList.get(key));
+        	Log.i("Main", "Restored: " + key);
+        	mMap.setWifiMarker(mWifiList.get(key));
         }
 	}
 	
@@ -157,7 +153,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 						dialog.cancel();
 					}
 			   });
-	    builder.show();	
+	    builder.show();
 	}
 	
 	@Override
@@ -215,20 +211,17 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         	ClientTCP client = new ClientTCP(mWifiList, this);
         	client.start();
         }
-        else if(option.equals(getResources().getString(R.string.info_gps)));
+        else if (option.equals(getResources().getString(R.string.info_gps)))
     	{
-			Criteria criteria = new Criteria();
-			String bestProvider = mLocationManager.getBestProvider(criteria, false);
-			Location location = mLocationManager.getLastKnownLocation(bestProvider);
-			
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-	        builder.setTitle("GPS Infos");
-		    builder.setMessage("Latitude: " + location.getLatitude() + "\nLongitude: " + location.getLongitude() + "\nAltitude: " + location.getAltitude() + "\nSpeed: "+location.getSpeed() );
-		    builder.setPositiveButton("OK", null);
-	        builder.setCancelable(false);
-	    	AlertDialog alert = builder.create();
-		    alert.show();
-    		
+        	Location location = mGPS.getLocation();
+        	
+    		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("GPS Infos");
+    	    builder.setMessage("Latitude: " + location.getLatitude() + "\nLongitude: " + location.getLongitude() + "\nAltitude: " + location.getAltitude() + "\nSpeed: "+location.getSpeed() );
+    	    builder.setPositiveButton("OK", null);
+            builder.setCancelable(false);
+        	AlertDialog alert = builder.create();
+    	    alert.show();
     	}
     	// Finalement on ferme le menu
         mDrawerLayout.closeDrawer(mDrawerList);
@@ -312,12 +305,17 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		{
 			Log.i("Main", "New wifi: " + newInfo.SSID + " [" + newInfo.BSSID + "]");
 			
+			// Va chercher la position actuelle
+			Location location = mGPS.getLocation();
+			newInfo.latitude = location.getLatitude();
+			newInfo.longitude = location.getLongitude();
+			newInfo.altitude = location.getAltitude();
+			
 			// Inconu, on ajoute
 			mWifiList.put(newInfo.BSSID, newInfo);
 			
-			// TODO: get la position actuelle du GPS
-			
-			mMap.addWifiMarker(newInfo);
+			// Ajoute sur la map
+			mMap.setWifiMarker(newInfo);
 			
 			// ajouter à la BD locale
 			LocalDatabase.getInstance(this).insertAccessPoint(newInfo);
@@ -326,12 +324,17 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		{
 			Log.i("Main", "Update wifi: " + newInfo.SSID + " [" + newInfo.BSSID + "]");
 			
+			// Va chercher la position actuelle
+			Location location = mGPS.getLocation();
+			newInfo.latitude = location.getLatitude();
+			newInfo.longitude = location.getLongitude();
+			newInfo.altitude = location.getAltitude();
+			
 			// Existe, mais la distance est plus courte donc meilleure précision => on update
 			mWifiList.put(newInfo.BSSID, newInfo);
 			
-			// TODO: get la position actuelle du GPS
-			
-			mMap.addWifiMarker(newInfo);
+			// Update position sur la map
+			mMap.setWifiMarker(newInfo);
 			
 			// met à jour dans la BD locale
 			LocalDatabase.getInstance(this).removeAccessPoint(newInfo);
