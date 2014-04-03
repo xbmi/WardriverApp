@@ -9,6 +9,7 @@ import android.graphics.Color;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -18,25 +19,28 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class WifiMap implements CompassListener, OnInfoWindowClickListener
+public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWindowClickListener
 {
 	private GoogleMap mMap;
 	
 	private LinkedList<WifiMapClickListener> wifiClickListeners = new LinkedList<WifiMapClickListener>();
 	
 	private HashMap<String, Marker> mMarkers = new HashMap<String, Marker>();
-	private HashMap<String, Circle> mCircles = new HashMap<String, Circle>();
+	private HashMap<String, CircleOptions> mCircleOptions = new HashMap<String, CircleOptions>();
 	
 	private HashMap<Marker, String> mMarkersBSSID = new HashMap<Marker, String>();
+	
+	private Circle shownCircle;
 	
 	// Carte google sur laquelle on indique les points d'accès wifi
 	public WifiMap(FragmentManager fragMgr)
 	{
         mMap = ((MapFragment) fragMgr.findFragmentById(R.id.map)).getMap();
+        mMap.setOnMarkerClickListener(this);
         mMap.setOnInfoWindowClickListener(this);
         mMap.setMyLocationEnabled(true);
         mMarkers.clear();
-        mCircles.clear();
+        mCircleOptions.clear();
 	}
 	
 	public void addWifiClickListener(WifiMapClickListener l)
@@ -75,13 +79,13 @@ public class WifiMap implements CompassListener, OnInfoWindowClickListener
 	{
 		// Vérifie si existe déjà
 		Marker m = mMarkers.get(w.BSSID);
-		Circle c = mCircles.get(w.BSSID);
-		if (m != null && c != null)
+		CircleOptions cOptions = mCircleOptions.get(w.BSSID);
+		if (m != null /*&& c != null*/)
 		{
 			// Existe déjà! On l'update
 			m.setPosition(new LatLng(w.latitude, w.longitude));
-			c.setCenter(new LatLng(w.latitude, w.longitude));
-			c.setRadius(w.distance);
+			cOptions.center(new LatLng(w.latitude, w.longitude));
+			cOptions.radius(w.distance);
 		}
 		else
 		{
@@ -112,16 +116,15 @@ public class WifiMap implements CompassListener, OnInfoWindowClickListener
 	    	}
 	    	
 	    	// Et un cercle pour l'imprécision (distance selon puissance)
-	    	CircleOptions circle = new CircleOptions()
+	    	cOptions = new CircleOptions()
 				 .center(new LatLng(w.latitude, w.longitude))
 				 .radius(w.distance) // en mètres
 				 .strokeColor(Color.TRANSPARENT)
 				 .fillColor(circleFillColor);
 	
 	    	m = mMap.addMarker(marker);
-	    	c = mMap.addCircle(circle);
 	    	mMarkers.put(w.BSSID, m);
-	    	mCircles.put(w.BSSID, c);
+	    	mCircleOptions.put(w.BSSID, cOptions); // On va seulement afficher le cercle quand le wifi est sélectionné, sinon lag
 	    	mMarkersBSSID.put(m, w.BSSID);
 		}
 	}
@@ -146,5 +149,20 @@ public class WifiMap implements CompassListener, OnInfoWindowClickListener
 		{
 			l.onMarkerClick( mMarkersBSSID.get(m) );
 		}
+	}
+
+	@Override
+	public boolean onMarkerClick(Marker m)
+	{
+		// On clear le dernier cercle affiché
+		if (shownCircle != null)
+		{
+			shownCircle.remove();
+		}
+		
+		// On affiche le cercle du wifi
+		String BSSID = mMarkersBSSID.get(m);
+		shownCircle = mMap.addCircle( mCircleOptions.get(BSSID) );
+		return false;
 	}
 }

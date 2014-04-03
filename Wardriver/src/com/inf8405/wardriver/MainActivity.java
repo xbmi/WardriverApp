@@ -308,18 +308,23 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			
 			// Va chercher la position actuelle
 			Location location = mGPS.getLocation();
-			newInfo.latitude = location.getLatitude();
-			newInfo.longitude = location.getLongitude();
-			newInfo.altitude = location.getAltitude();
 			
-			// Inconu, on ajoute
-			mWifiList.put(newInfo.BSSID, newInfo);
-			
-			// Ajoute sur la map
-			mMap.setWifiMarker(newInfo);
-			
-			// ajouter à la BD locale
-			LocalDatabase.getInstance(this).insertAccessPoint(newInfo);
+			// On ajoute seulement le wifi si on a une position valide
+			if (location != null)
+			{
+				newInfo.latitude = location.getLatitude();
+				newInfo.longitude = location.getLongitude();
+				newInfo.altitude = location.getAltitude();
+				
+				// Inconu, on ajoute
+				mWifiList.put(newInfo.BSSID, newInfo);
+				
+				// Ajoute sur la map
+				mMap.setWifiMarker(newInfo);
+				
+				// ajouter à la BD locale
+				LocalDatabase.getInstance(this).insertAccessPoint(newInfo);
+			}
 		}
 		else if (newInfo.distance < oldInfo.distance)
 		{
@@ -327,19 +332,24 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			
 			// Va chercher la position actuelle
 			Location location = mGPS.getLocation();
-			newInfo.latitude = location.getLatitude();
-			newInfo.longitude = location.getLongitude();
-			newInfo.altitude = location.getAltitude();
 			
-			// Existe, mais la distance est plus courte donc meilleure précision => on update
-			mWifiList.put(newInfo.BSSID, newInfo);
-			
-			// Update position sur la map
-			mMap.setWifiMarker(newInfo);
-			
-			// met à jour dans la BD locale
-			LocalDatabase.getInstance(this).removeAccessPoint(newInfo);
-			LocalDatabase.getInstance(this).insertAccessPoint(newInfo);
+			// On ajoute seulement le wifi si on a une position valide
+			if (location != null)
+			{
+				newInfo.latitude = location.getLatitude();
+				newInfo.longitude = location.getLongitude();
+				newInfo.altitude = location.getAltitude();
+				
+				// Existe, mais la distance est plus courte donc meilleure précision => on update
+				mWifiList.put(newInfo.BSSID, newInfo);
+				
+				// Update position sur la map
+				mMap.setWifiMarker(newInfo);
+				
+				// met à jour dans la BD locale
+				LocalDatabase.getInstance(this).removeAccessPoint(newInfo);
+				LocalDatabase.getInstance(this).insertAccessPoint(newInfo);
+			}
 		}
 	}
 
