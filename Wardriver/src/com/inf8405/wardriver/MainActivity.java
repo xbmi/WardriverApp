@@ -38,13 +38,14 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
     private WifiMap mMap;
     
     private WifiScanner mWifiScanner;
-    private int mWifiScanIntervalMS = 0;
+    private int mWifiScanIntervalMS = 3000;
     
     private Compass mCompass;
     private boolean mCompassEnabled = false;
     private Button mBtnCompass;
 
     private GPS mGPS;
+    private int mGPSScanIntervalMS = 3000;
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -84,6 +85,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         
         //On construit le listener pour la position
         mGPS = new GPS(this);
+        mGPSScanIntervalMS = SettingsActivity.getWifiScanInterval(this);
         
         // Load la base de donnée locale et met à jour la carte
         mWifiList = LocalDatabase.getInstance(this).getAllAccessPoints();
@@ -144,6 +146,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 						if (mWifiScanner.isRunning())
 						{
 							mWifiScanner.stop(MainActivity.this);
+							mGPS.stop();
 						}
 						finish();
 					}
@@ -178,6 +181,13 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
     	String option = mOptions[pos];
     	if (option.equals( getResources().getString(R.string.menu_record_start)) )
     	{
+    		// On démarre le GPS
+    		if (!mGPS.isRunning())
+    		{
+    			mGPS.start(mGPSScanIntervalMS);
+    			Log.i("Main", "GPS scanner started, interval: " + mGPSScanIntervalMS);
+    		}
+    		
     		// On démarre le scanneur
     		if (!mWifiScanner.isRunning())
     		{
@@ -191,6 +201,13 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
     	}
     	else if (option.equals( getResources().getString(R.string.menu_record_stop)) )
     	{
+    		// On arrête le GPS
+    		if (mGPS.isRunning())
+    		{
+    			mGPS.stop();
+    			Log.i("Main", "GPS scanner stopped");
+    		}
+    		
     		// On arrête le scanner
     		if (mWifiScanner.isRunning())
     		{
@@ -214,12 +231,19 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         }
         else if (option.equals(getResources().getString(R.string.info_gps)))
     	{
-        	Location location = mGPS.getLocation();
+        	Location location = mGPS.getLocationApprox();
         	
     		AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("GPS Infos");
-    	    builder.setMessage("Latitude: " + location.getLatitude() + "\nLongitude: " + location.getLongitude() + "\nAltitude: " + location.getAltitude() + "\nSpeed: "+location.getSpeed() );
-    	    builder.setPositiveButton("OK", null);
+            if (location != null)
+            {
+            	builder.setMessage("Latitude: " + location.getLatitude() + "\nLongitude: " + location.getLongitude() + "\nAltitude: " + location.getAltitude() + "\nSpeed: "+location.getSpeed() );
+            }
+            else
+            {
+            	builder.setMessage("No good position available at the moment, please try again shortly.");
+            }
+            builder.setPositiveButton("OK", null);
             builder.setCancelable(false);
         	AlertDialog alert = builder.create();
     	    alert.show();
@@ -266,6 +290,14 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 				}
 				Log.i("onActivityResult", "Wifi scan interval: " + mWifiScanIntervalMS);
 				
+				// Interval GPS
+				mGPSScanIntervalMS = SettingsActivity.getWifiScanInterval(this);
+				if (mGPS.isRunning())
+				{
+					mGPS.start(mGPSScanIntervalMS);
+				}
+				Log.i("onActivityResult", "GPS scan interval: " + mGPSScanIntervalMS);
+				
 				break;
 		}
 	}
@@ -304,14 +336,14 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		WifiInfo oldInfo = mWifiList.get(newInfo.BSSID);
 		if (oldInfo == null)
 		{
-			Log.i("Main", "New wifi: " + newInfo.SSID + " [" + newInfo.BSSID + "]");
-			
 			// Va chercher la position actuelle
-			Location location = mGPS.getLocation();
+			Location location = mGPS.getLocationPrecise();
 			
 			// On ajoute seulement le wifi si on a une position valide
 			if (location != null)
 			{
+				Log.i("Main", "New wifi: " + newInfo.SSID + " [" + newInfo.BSSID + "]");
+				
 				newInfo.latitude = location.getLatitude();
 				newInfo.longitude = location.getLongitude();
 				newInfo.altitude = location.getAltitude();
@@ -328,14 +360,14 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		}
 		else if (newInfo.distance < oldInfo.distance)
 		{
-			Log.i("Main", "Update wifi: " + newInfo.SSID + " [" + newInfo.BSSID + "]");
-			
 			// Va chercher la position actuelle
-			Location location = mGPS.getLocation();
+			Location location = mGPS.getLocationPrecise();
 			
 			// On ajoute seulement le wifi si on a une position valide
 			if (location != null)
 			{
+				Log.i("Main", "Update wifi: " + newInfo.SSID + " [" + newInfo.BSSID + "]");
+				
 				newInfo.latitude = location.getLatitude();
 				newInfo.longitude = location.getLongitude();
 				newInfo.altitude = location.getAltitude();
