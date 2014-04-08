@@ -46,6 +46,7 @@ public class Compass implements SensorEventListener
 		// On s'enregistre auprès du censeur d'orientation
 		mSensorMgr.registerListener(this, mSensorMgr.getDefaultSensor(Sensor.TYPE_ORIENTATION), SensorManager.SENSOR_DELAY_UI);
 		mRunning = true;
+		notifyOrientation();
 	}
 	
 	// On arrête l'écoute du censeur
@@ -85,8 +86,8 @@ public class Compass implements SensorEventListener
 	@Override
 	public void onSensorChanged(SensorEvent event)
 	{
-		// On vérifie si l'azimuth a changé (values[0])
-		if (Math.abs(mAzimuth - event.values[0]) > 5)
+		// On vérifie si l'azimuth a changé suffisamment (values[0])
+		if (Math.abs(mAzimuth - event.values[0]) > 0.3)
 		{
 			// Si oui on la récupère et rotate la carte
 			mAzimuth = event.values[0]; // Note: 0=Nord, 90=Est, 180=Sud, 270=Ouest

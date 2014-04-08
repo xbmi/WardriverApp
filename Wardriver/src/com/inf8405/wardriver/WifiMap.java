@@ -70,8 +70,7 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
 		CameraPosition camPos = CameraPosition.builder(mMap.getCameraPosition())
 			.bearing(azimuth)
 			.build();
-		mMap.stopAnimation();
-		mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
+		mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
 	}
 	
 	// Ajoute un marqueur sur la carte pour un points d'accès wifi
@@ -80,7 +79,7 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
 		// Vérifie si existe déjà
 		Marker m = mMarkers.get(w.BSSID);
 		CircleOptions cOptions = mCircleOptions.get(w.BSSID);
-		if (m != null /*&& c != null*/)
+		if (m != null && cOptions != null)
 		{
 			// Existe déjà! On l'update
 			m.setPosition(new LatLng(w.latitude, w.longitude));
