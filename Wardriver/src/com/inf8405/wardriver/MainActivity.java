@@ -87,6 +87,10 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         mGPS = new GPS(this);
         mGPSScanIntervalMS = SettingsActivity.getWifiScanInterval(this);
         
+        //On zoom sur la position actuelle
+        Location location = mGPS.getLocationApprox();
+        mMap.zoomOnLocation(location.getLatitude(), location.getLongitude());
+        
         // Load la base de donnée locale et met à jour la carte
         mWifiList = LocalDatabase.getInstance(this).getAllAccessPoints();
         for (String key : mWifiList.keySet())

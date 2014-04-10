@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import android.app.FragmentManager;
 import android.graphics.Color;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
@@ -168,5 +169,12 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
 		String BSSID = mMarkersBSSID.get(m);
 		shownCircle = mMap.addCircle( mCircleOptions.get(BSSID) );
 		return false;
+	}
+	
+	public void zoomOnLocation(double latitude, double longitute)
+	{
+        LatLng coordinate = new LatLng(latitude, longitute);
+        CameraUpdate yourLocation = CameraUpdateFactory.newLatLngZoom(coordinate, 15);
+        mMap.animateCamera(yourLocation);
 	}
 }
