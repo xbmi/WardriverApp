@@ -11,7 +11,6 @@ Pas oublier d'importer dans Eclipse les 3 projets Wardriver, android-support-v7-
 
 À faire:
  - Trouvé nos infos GPS (position, altitude, VITESSE!!, etc.)
- - Automatique zoomer carte à la position actuelle
  - ..................
  - SQLite DB locale pour la position + infos des wifi
  - ..................
