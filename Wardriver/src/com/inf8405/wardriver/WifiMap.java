@@ -1,5 +1,6 @@
 package com.inf8405.wardriver;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -32,6 +33,11 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
 	private HashMap<Marker, String> mMarkersBSSID = new HashMap<Marker, String>();
 	
 	private Circle shownCircle;
+	
+	private final int UNSECURED_COLOR = Color.argb(90, 240, 110, 110);
+	private final int VULN_COLOR = Color.argb(90, 240, 175, 105);
+	private final int SECURED_COLOR = Color.argb(90, 110, 240, 110);
+
 	
 	// Carte google sur laquelle on indique les points d'accès wifi
 	public WifiMap(FragmentManager fragMgr)
@@ -107,17 +113,17 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
 	    	if (w.capabilities.contains("WEP"))
 	    	{
 				marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
-				circleFillColor = Color.argb(90, 240, 175, 105);
+				circleFillColor = VULN_COLOR;
 	    	}
 	    	else if (w.capabilities.contains("WPA"))
 	    	{
 				marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-				circleFillColor = Color.argb(90, 110, 240, 110);
+				circleFillColor = SECURED_COLOR;
 	    	}
 	    	else
 	    	{
 				marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-				circleFillColor = Color.argb(90, 240, 110, 110);
+				circleFillColor = UNSECURED_COLOR;
 	    	}
 	    	
 	    	// Et un cercle pour l'imprécision (distance selon puissance)
@@ -176,5 +182,21 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
         LatLng coordinate = new LatLng(latitude, longitute);
         CameraUpdate yourLocation = CameraUpdateFactory.newLatLngZoom(coordinate, 15);
         mMap.animateCamera(yourLocation);
+	}
+	
+	public void applyFilter(ArrayList<String> bssidsToShow)
+	{
+		for (String bssid : mMarkers.keySet())
+		{
+			mMarkers.get(bssid).setVisible(bssidsToShow.contains(bssid));
+		}
+	}
+	
+	public void resetFilter()
+	{
+		for (String bssid : mMarkers.keySet())
+		{
+			mMarkers.get(bssid).setVisible(true);
+		}
 	}
 }

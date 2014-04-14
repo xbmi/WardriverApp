@@ -1,5 +1,6 @@
 package com.inf8405.wardriver;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import android.app.AlertDialog;
@@ -47,6 +48,10 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
     private GPS mGPS;
     private int mGPSScanIntervalMS = 3000;
     
+	private enum FilterState { OFF, UNSECURED, VULN, SECURED }
+	private FilterState mFilterState = FilterState.OFF;
+	private Button mBtnFilter;
+    
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -71,6 +76,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         // On construit la carte google pour les wifi
         mMap = new WifiMap(getFragmentManager());
         mMap.addWifiClickListener(this);
+        mBtnFilter = (Button) findViewById(R.id.btnFilter);
+        mBtnFilter.setOnClickListener(this);
         
         // On contruit le scanner de points d'accès wifi
         mWifiScanner = new WifiScanner(this);
@@ -329,6 +336,48 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	            	mCompass.addListener(mMap);
 	            	mCompass.start();
 				}
+				break;
+			case R.id.btnFilter:
+				switch (mFilterState)
+				{
+					case OFF:
+						mFilterState = FilterState.UNSECURED;
+						mBtnFilter.setBackgroundDrawable(getResources().getDrawable(R.drawable.filter_unsecured));
+						break;
+					case UNSECURED:
+						mFilterState = FilterState.VULN;
+						mBtnFilter.setBackgroundDrawable(getResources().getDrawable(R.drawable.filter_vuln));
+						break;
+					case VULN:
+						mFilterState = FilterState.SECURED;
+						mBtnFilter.setBackgroundDrawable(getResources().getDrawable(R.drawable.filter_secured));
+						break;	
+					case SECURED:
+						mFilterState = FilterState.OFF;
+						mBtnFilter.setBackgroundDrawable(getResources().getDrawable(R.drawable.filter_off));
+						mMap.resetFilter();
+						return;
+				}
+				
+				ArrayList<String> bssidsToShow = new ArrayList<String>();
+				for (String bssid : mWifiList.keySet())
+				{
+					WifiInfo i = mWifiList.get(bssid);
+			    	if (mFilterState == FilterState.VULN && i.capabilities.contains("WEP"))
+			    	{
+			    		bssidsToShow.add(bssid);
+			    	}
+			    	else if (mFilterState == FilterState.SECURED && i.capabilities.contains("WPA"))
+			    	{
+			    		bssidsToShow.add(bssid);
+			    	}
+			    	else if (mFilterState == FilterState.UNSECURED && !i.capabilities.contains("WPA") && !i.capabilities.contains("WEP"))
+			    	{
+			    		bssidsToShow.add(bssid);
+			    	}
+				}
+				
+				mMap.applyFilter(bssidsToShow);
 				break;
 		}
 	}
