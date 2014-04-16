@@ -12,14 +12,14 @@
     </PreferenceCategory>
     
     <PreferenceCategory
-        android:title="Wireless" >
+        android:title="Scanning" >
         <ListPreference
-            android:key="@string/pref_key_wifi_scanrate"
+            android:key="@string/pref_key_scanrate"
             android:title="Scan rate"
-            android:summary="Interval between wireless scans"
+            android:summary="Interval between scans"
             android:defaultValue="3000"
-            android:entries="@array/wifi_update_nterval"
-            android:entryValues="@array/wifi_update_interval_values" />
+            android:entries="@array/scan_interval"
+            android:entryValues="@array/scan_interval_values" />
     </PreferenceCategory>
     
 </PreferenceScreen>

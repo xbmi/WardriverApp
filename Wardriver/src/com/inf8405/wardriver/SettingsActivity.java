@@ -36,10 +36,10 @@ public class SettingsActivity extends PreferenceActivity
 		return Integer.parseInt( prefs.getString( c.getResources().getString(R.string.pref_key_compass_offset), "0" ) );
 	}
 	
-	// Retourne la valeur sauvegardée ou sinon celle par défaut de l'interval de scan du wifi
-	public static int getWifiScanInterval(Context c)
+	// Retourne la valeur sauvegardée ou sinon celle par défaut de l'interval de scan
+	public static int getScanInterval(Context c)
 	{
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
-		return Integer.parseInt( prefs.getString( c.getResources().getString(R.string.pref_key_wifi_scanrate), "3000" ) );
+		return Integer.parseInt( prefs.getString( c.getResources().getString(R.string.pref_key_scanrate), "3000" ) );
 	}
 }

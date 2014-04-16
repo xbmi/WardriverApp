@@ -82,7 +82,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         // On contruit le scanner de points d'accès wifi
         mWifiScanner = new WifiScanner(this);
         mWifiScanner.addListener(this);
-        mWifiScanIntervalMS = SettingsActivity.getWifiScanInterval(this);
+        mWifiScanIntervalMS = SettingsActivity.getScanInterval(this);
         
         // On contruit la boussole
         mCompass = new Compass(this);
@@ -92,7 +92,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         
         //On construit le listener pour la position
         mGPS = new GPS(this);
-        mGPSScanIntervalMS = SettingsActivity.getWifiScanInterval(this);
+        mGPSScanIntervalMS = SettingsActivity.getScanInterval(this);
         
         //On zoom sur la position actuelle
         Location location = mGPS.getLocationApprox();
@@ -294,7 +294,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 				Log.i("onActivityResult", "Compass offset: " + SettingsActivity.getCompassOffset(this));
 				
 				// Interval de scan du wifi
-				mWifiScanIntervalMS = SettingsActivity.getWifiScanInterval(this);
+				mWifiScanIntervalMS = SettingsActivity.getScanInterval(this);
 				if (mWifiScanner.isRunning())
 				{
 					mWifiScanner.start(this, mWifiScanIntervalMS);
@@ -302,7 +302,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 				Log.i("onActivityResult", "Wifi scan interval: " + mWifiScanIntervalMS);
 				
 				// Interval GPS
-				mGPSScanIntervalMS = SettingsActivity.getWifiScanInterval(this);
+				mGPSScanIntervalMS = SettingsActivity.getScanInterval(this);
 				if (mGPS.isRunning())
 				{
 					mGPS.start(mGPSScanIntervalMS);

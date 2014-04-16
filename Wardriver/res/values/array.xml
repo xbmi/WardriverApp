@@ -32,20 +32,20 @@
         <item name="20">20</item>
     </string-array>
     
-    <string-array name="wifi_update_nterval">
+    <string-array name="scan_interval">
+        <item name="500">Every 0.5 second</item>
         <item name="1000">Every 1 second</item>
         <item name="3000">Every 3 seconds</item>
         <item name="5000">Every 5 seconds</item>
         <item name="10000">Every 10 seconds</item>
-        <item name="20000">Every 20 seconds</item>
     </string-array>
     
-    <string-array name="wifi_update_interval_values">
+    <string-array name="scan_interval_values">
+        <item name="500">500</item>
         <item name="1000">1000</item>
         <item name="3000">3000</item>
         <item name="5000">5000</item>
         <item name="10000">10000</item>
-        <item name="20000">20000</item>
     </string-array>
     
 </resources>
