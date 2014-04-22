@@ -1,4 +1,4 @@
-package com.inf8405.wardriver;
+package com.inf8405.wardriver.compass;
 
 public interface CompassListener
 {

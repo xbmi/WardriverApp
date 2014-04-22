@@ -1,4 +1,4 @@
-package com.inf8405.wardriver;
+package com.inf8405.wardriver.db;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,6 +11,8 @@ import java.util.HashMap;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.inf8405.wardriver.wifi.WifiInfo;
 
 import android.content.Context;
 import android.provider.Settings.Secure;

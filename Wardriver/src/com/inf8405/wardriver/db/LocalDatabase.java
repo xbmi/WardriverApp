@@ -1,6 +1,8 @@
-package com.inf8405.wardriver;
+package com.inf8405.wardriver.db;
 
 import java.util.HashMap;
+
+import com.inf8405.wardriver.wifi.WifiInfo;
 
 import android.content.ContentValues;
 import android.content.Context;

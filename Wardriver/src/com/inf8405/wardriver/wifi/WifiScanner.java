@@ -1,4 +1,4 @@
-package com.inf8405.wardriver;
+package com.inf8405.wardriver.wifi;
 
 import java.util.LinkedList;
 import java.util.List;

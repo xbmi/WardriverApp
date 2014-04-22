@@ -1,4 +1,6 @@
-package com.inf8405.wardriver;
+package com.inf8405.wardriver.wifi;
+
+import com.inf8405.wardriver.wifi.WifiInfo;
 
 public interface WifiListener
 {

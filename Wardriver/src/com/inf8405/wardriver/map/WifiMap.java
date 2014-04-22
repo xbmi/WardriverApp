@@ -1,4 +1,4 @@
-package com.inf8405.wardriver;
+package com.inf8405.wardriver.map;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +20,9 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.inf8405.wardriver.R;
+import com.inf8405.wardriver.compass.CompassListener;
+import com.inf8405.wardriver.wifi.WifiInfo;
 
 public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWindowClickListener
 {

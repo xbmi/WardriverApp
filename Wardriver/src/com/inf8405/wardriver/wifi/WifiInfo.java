@@ -1,4 +1,4 @@
-package com.inf8405.wardriver;
+package com.inf8405.wardriver.wifi;
 
 import android.net.wifi.ScanResult;
 

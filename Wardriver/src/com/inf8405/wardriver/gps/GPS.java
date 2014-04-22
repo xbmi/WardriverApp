@@ -1,4 +1,4 @@
-package com.inf8405.wardriver;
+package com.inf8405.wardriver.gps;
 
 import android.content.Context;
 import android.location.Criteria;

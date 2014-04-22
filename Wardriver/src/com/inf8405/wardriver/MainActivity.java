@@ -23,7 +23,15 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.inf8405.wardriver.LocalDatabase;
+import com.inf8405.wardriver.compass.Compass;
+import com.inf8405.wardriver.db.ClientTCP;
+import com.inf8405.wardriver.db.LocalDatabase;
+import com.inf8405.wardriver.gps.GPS;
+import com.inf8405.wardriver.map.WifiMap;
+import com.inf8405.wardriver.map.WifiMapClickListener;
+import com.inf8405.wardriver.wifi.WifiInfo;
+import com.inf8405.wardriver.wifi.WifiListener;
+import com.inf8405.wardriver.wifi.WifiScanner;
 
 public class MainActivity extends ActionBarActivity implements OnClickListener, WifiListener, WifiMapClickListener
 {
