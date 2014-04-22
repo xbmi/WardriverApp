@@ -48,13 +48,13 @@ public class WifiScanner extends BroadcastReceiver
 		listeners.remove(l);
 	}
 	
-	// Fonction qui démarre le scanner de wifi (ou update l'interval)
-	// Scan uniquement 1 fois si l'interval recu est de 0
+	// Fonction qui démarre le scanner de wifi (ou met à jour la valeur de l'intervale)
+	// Balaye uniquement 1 fois si l'interval recu est de 0
 	public void start(Context context, int intervalMS)
 	{
 		if (mRunning)
 		{
-			// Déjà démarré, on update l'interval et c'est tout
+			// Déjà démarré, on update l'intervale et c'est tout
 			mIntervalMS = intervalMS;
 		}
 		else
@@ -64,10 +64,12 @@ public class WifiScanner extends BroadcastReceiver
 			mIntervalMS = intervalMS;
 			if (mIntervalMS == 0)
 			{
+				// Une seule demande
 				mWifiMgr.startScan();
 			}
 			else
 			{
+				// Démarre un scan périodique
 				mRunning = true;
 				scanAndPost();
 			}
@@ -109,31 +111,34 @@ public class WifiScanner extends BroadcastReceiver
 	}
 	
 	
-	// Fonction appelée lorsqu'un nouveau wifi est découvert
-	// ou que la distance est plus courte
-	private void newWifiFound(WifiInfo info)
+	// Envoi à tous les observateurs les informations sur le nouveau wifi trouvé
+	private void notifyListeners(WifiInfo info)
 	{
 		// On notifie les observateurs
 		for (WifiListener l : listeners)
 		{
-			l.onNewWifiFound(info);
+			l.onWifiFound(info);
 		}
 	}
 
 
 	// Fonction appelée avec les résultats lorsqu'on scan se termine
 	@Override
-	public void onReceive(Context context, Intent intent) {
+	public void onReceive(Context context, Intent intent)
+	{
+		// On récupère les données
 		List<ScanResult> wifiList = mWifiMgr.getScanResults();
+		
+		// On crée des objets WifiInfo et notifie
 		for (ScanResult r : wifiList)
 		{
 			WifiInfo info = new WifiInfo(r);
-			newWifiFound(info);
+			notifyListeners(info);
 		}
 		
 		if (mIntervalMS == 0)
 		{
-			// On ne répète pas, on stoppe
+			// Simple balayage, on ne répète pas, on stoppe
 			mRunning = false;
 			context.unregisterReceiver(this);
 		}

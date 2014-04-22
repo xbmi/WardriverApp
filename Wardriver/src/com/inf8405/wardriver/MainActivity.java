@@ -36,29 +36,37 @@ import com.inf8405.wardriver.wifi.WifiScanner;
 public class MainActivity extends ActionBarActivity implements OnClickListener, WifiListener, WifiMapClickListener
 {
 	private static final int RESULT_SETTINGS_ACTIVITY = 1;
-	
+
+	// Attributs liés à l'interface usager
 	private String[] mOptions;
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
+    private Button mBtnFilter;
     
+    // Liste principale des WifiInfo
     private HashMap<String, WifiInfo> mWifiList = new HashMap<String, WifiInfo>();
     
+    // Carte
     private WifiMap mMap;
     
+    // Scanner wifi
     private WifiScanner mWifiScanner;
     private int mWifiScanIntervalMS = 3000;
     
+    // Boussole
     private Compass mCompass;
     private boolean mCompassEnabled = false;
     private Button mBtnCompass;
 
+    // GPS
     private GPS mGPS;
     private int mGPSScanIntervalMS = 3000;
     
+    // Attributs liés au filtre
 	private enum FilterState { OFF, UNSECURED, VULN, SECURED }
 	private FilterState mFilterState = FilterState.OFF;
-	private Button mBtnFilter;
+	
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -67,7 +75,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		
 		setContentView(R.layout.activity_main);
 
-		// On récupère et ajuste le drawer
+		// On récupère et ajuste le "drawer" (paneau coulissant de gauche)
 		mOptions = getResources().getStringArray(R.array.menu_options);
 		
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -98,15 +106,15 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         mBtnCompass = (Button) findViewById(R.id.btnCompass);
         mBtnCompass.setOnClickListener(this);
         
-        //On construit le listener pour la position
+        // On construit le module pour la localisation
         mGPS = new GPS(this);
         mGPSScanIntervalMS = SettingsActivity.getScanInterval(this);
         
-        //On zoom sur la position actuelle
+        // On zoom sur la position actuelle de l'usager
         Location location = mGPS.getLocationApprox();
         mMap.zoomOnLocation(location.getLatitude(), location.getLongitude());
         
-        // Load la base de donnée locale et met à jour la carte
+        // On charge la base de donnée locale et met à jour la carte
         mWifiList = LocalDatabase.getInstance(this).getAllAccessPoints();
         for (String key : mWifiList.keySet())
         {
@@ -118,16 +126,17 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	protected void onPostCreate(Bundle savedInstanceState)
 	{
 	    super.onPostCreate(savedInstanceState);
-	    mDrawerToggle.syncState();
+	    mDrawerToggle.syncState(); // on garde à jour le drawer
 	}
 
 	@Override
 	public void onConfigurationChanged(Configuration newConfig)
 	{
 	    super.onConfigurationChanged(newConfig);
-	    mDrawerToggle.onConfigurationChanged(newConfig);
+	    mDrawerToggle.onConfigurationChanged(newConfig); // on garde à jour le drawer
 	}
 	
+	// Lorsque l'application est mise en pause (change d'application par exemple)
 	@Override
 	public void onPause()
 	{
@@ -140,21 +149,24 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		}
 	}
 	
+	// Lorsque notre application revient en premier plan
 	@Override
 	public void onResume()
 	{
 		super.onResume();
 		
-		// On redémarre la boussole si activée
+		// On redémarre la boussole si elle était préalablement activée
 		if (mCompassEnabled)
 		{
 			mCompass.start();
 		}
 	}
 	
+	// Lorsque le bouton de retour est appuyé, on demande confirmation pour quitter
 	@Override
 	public void onBackPressed()
 	{
+		// Dialogue d'avertissement et de confirmation
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle("Quit Wardriver")
 			   .setMessage("Do you really want to leave the app? The scanning will be stopped.")
@@ -162,23 +174,30 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			   .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
+						// On arrête le scanneur de WiFi et GPS
 						if (mWifiScanner.isRunning())
 						{
 							mWifiScanner.stop(MainActivity.this);
+						}
+						if (mGPS.isRunning())
+						{
 							mGPS.stop();
 						}
+						// On termine l'application
 						finish();
 					}
 			   })
 			   .setNegativeButton("No", new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
+						// On cancelle le dialogue
 						dialog.cancel();
 					}
 			   });
 	    builder.show();
 	}
 	
+	// Pour controler l'ouverture et la fermeture du drawer
 	@Override
     public boolean onOptionsItemSelected(MenuItem item)
 	{
@@ -198,7 +217,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
     {
     	// On vérifie quelle option a été choisie
     	String option = mOptions[pos];
-    	if (option.equals( getResources().getString(R.string.menu_record_start)) )
+    	if (option.equals( getResources().getString(R.string.menu_record_start)) ) // START RECORDING
     	{
     		// On démarre le GPS
     		if (!mGPS.isRunning())
@@ -218,7 +237,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
     		mOptions[pos] = getResources().getString(R.string.menu_record_stop);
     		mDrawerList.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_list, mOptions));
     	}
-    	else if (option.equals( getResources().getString(R.string.menu_record_stop)) )
+    	else if (option.equals( getResources().getString(R.string.menu_record_stop)) ) // STOP RECORDING
     	{
     		// On arrête le GPS
     		if (mGPS.isRunning())
@@ -238,18 +257,21 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
     		mOptions[pos] = getResources().getString(R.string.menu_record_start);
     		mDrawerList.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_list, mOptions));
     	}
-    	else if (option.equals( getResources().getString(R.string.menu_options)) )
+    	else if (option.equals( getResources().getString(R.string.menu_options)) ) // OPTIONS
     	{
+    		// On ouvre l'activité des préférences
     		Intent intent = new Intent(this, SettingsActivity.class);
     		this.startActivityForResult(intent, RESULT_SETTINGS_ACTIVITY);
     	}
-        else if(option.equals(getResources().getString(R.string.menu_testPush)))
+        else if(option.equals(getResources().getString(R.string.menu_testPush))) // SYNCRHONISATION AVEC SERVEUR
         {
+        	// On synchronise avec un serveur
         	ClientTCP client = new ClientTCP(mWifiList, this);
         	client.start();
         }
-        else if (option.equals(getResources().getString(R.string.info_gps)))
+        else if (option.equals(getResources().getString(R.string.info_gps))) // INFOS GPS
     	{
+        	// On affiche diverses informations approximatives sur la position
         	Location location = mGPS.getLocationApprox();
         	
     		AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -267,6 +289,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         	AlertDialog alert = builder.create();
     	    alert.show();
     	}
+    	
     	// Finalement on ferme le menu
         mDrawerLayout.closeDrawer(mDrawerList);
     }
@@ -291,13 +314,13 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		switch (requestCode)
 		{
 			case RESULT_SETTINGS_ACTIVITY:
-				// Paramètres ont possiblement été changés, on met les paramètres à jour
+				// Paramètres ont possiblement été changés, on met les attributs à jour
 				
 				// Offset de la boussole
 				mCompass.setAzimuthOffset( SettingsActivity.getCompassOffset(this) );
 				if (mCompassEnabled)
 				{
-					mCompass.notifyOrientation();
+					mCompass.notifyListeners();
 				}
 				Log.i("onActivityResult", "Compass offset: " + SettingsActivity.getCompassOffset(this));
 				
@@ -309,7 +332,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 				}
 				Log.i("onActivityResult", "Wifi scan interval: " + mWifiScanIntervalMS);
 				
-				// Interval GPS
+				// Interval de mise à jour du GPS
 				mGPSScanIntervalMS = SettingsActivity.getScanInterval(this);
 				if (mGPS.isRunning())
 				{
@@ -321,7 +344,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		}
 	}
 
-    // Pour écouter les clicks sur les autes éléments de l'interface
+    // Pour écouter les clics sur les autres éléments de l'interface
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onClick(View v)
@@ -346,6 +369,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 				}
 				break;
 			case R.id.btnFilter:
+				// Applique un filtre sur les marqueurs affichés sur la carte
 				switch (mFilterState)
 				{
 					case OFF:
@@ -367,6 +391,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 						return;
 				}
 				
+				// On construit une liste des marqueurs qui devraient être affichés (connus par le BSSID)
 				ArrayList<String> bssidsToShow = new ArrayList<String>();
 				for (String bssid : mWifiList.keySet())
 				{
@@ -385,13 +410,15 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			    	}
 				}
 				
+				// On applique le filtre
 				mMap.applyFilter(bssidsToShow);
 				break;
 		}
 	}
 
+	// Fonction appelée par le WifiScanner lorsque des informations sur une borne WiFi on été trouvées
 	@Override
-	public void onNewWifiFound(WifiInfo newInfo)
+	public void onWifiFound(WifiInfo newInfo)
 	{
 		// On vérifie si existe déjà dans la liste ou non
 		WifiInfo oldInfo = mWifiList.get(newInfo.BSSID);
@@ -409,19 +436,21 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 				newInfo.longitude = location.getLongitude();
 				newInfo.altitude = location.getAltitude();
 				
-				// Inconu, on ajoute
+				// Wifi inconnu, on ajoute
 				mWifiList.put(newInfo.BSSID, newInfo);
 				
-				// Ajoute sur la map
+				// Ajoute marqueur sur la carte
 				mMap.setWifiMarker(newInfo);
 				
-				// ajouter à la BD locale
+				// Ajouter à la BD locale
 				LocalDatabase.getInstance(this).insertAccessPoint(newInfo);
 			}
 		}
 		else if (newInfo.distance < oldInfo.distance)
 		{
-			// Va chercher la position actuelle
+			// Le Wifi est déjà connu mais la nouvelle distance est plus courte!
+			
+			// On va chercher la position actuelle
 			Location location = mGPS.getLocationPrecise();
 			
 			// On ajoute seulement le wifi si on a une position valide
@@ -433,24 +462,28 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 				newInfo.longitude = location.getLongitude();
 				newInfo.altitude = location.getAltitude();
 				
-				// Existe, mais la distance est plus courte donc meilleure précision => on update
+				// Meilleure précision => on met à jour notre information
 				mWifiList.put(newInfo.BSSID, newInfo);
 				
-				// Update position sur la map
+				// Met à jour la position sur la carte
 				mMap.setWifiMarker(newInfo);
 				
-				// met à jour dans la BD locale
+				// Met à jour dans la BD locale
 				LocalDatabase.getInstance(this).removeAccessPoint(newInfo);
 				LocalDatabase.getInstance(this).insertAccessPoint(newInfo);
 			}
 		}
 	}
 
+	
+	// Appelé lorsque l'utilisateur clique sur une bulle d'information d'un marqueur pour avoir plus d'informations
 	@Override
-	public void onMarkerClick(String wifiBSSID)
+	public void onMarkerInfoClick(String wifiBSSID)
 	{
+		// On trouve l'information associée
 		WifiInfo w = mWifiList.get(wifiBSSID);
 
+		// On affiche un dialogue avec toutes les informations
 		String info = "SSID: " + w.SSID +
 					  "\nBSSID: " + w.BSSID +
 					  "\nSecured: "	+ (w.secured ? "Yes" : "No") +
