@@ -32,11 +32,19 @@ public class ClientTCP {
 		this.context = context;
 	}
 	
-	public void start() {
-		new Thread(new ClientThread()).start();
+	public void start(DBSyncListener l) {
+		new Thread(new ClientThread(l)).start();
 	}
 	
 	class ClientThread implements Runnable {
+		DBSyncListener listener;
+		
+		public ClientThread(DBSyncListener l)
+		{
+			super();
+			listener = l;
+		}
+		
 		@Override
 		public void run() {
 			try {
@@ -124,7 +132,9 @@ public class ClientTCP {
 					}
 					
 					hm = LocalDatabase.getInstance(context).getAllAccessPoints();
-					taille = hm.size();			
+					taille = hm.size();
+					
+					listener.onDBSynced();
 				}
 			} catch (UnknownHostException e1) {
 				e1.printStackTrace();

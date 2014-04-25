@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
@@ -25,6 +26,7 @@ import android.widget.TextView;
 
 import com.inf8405.wardriver.compass.Compass;
 import com.inf8405.wardriver.db.ClientTCP;
+import com.inf8405.wardriver.db.DBSyncListener;
 import com.inf8405.wardriver.db.LocalDatabase;
 import com.inf8405.wardriver.gps.GPS;
 import com.inf8405.wardriver.map.WifiMap;
@@ -277,17 +279,22 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			System.out.println("Nombre d'entrees dans bd locale: " + taille.toString());
         	
         	ClientTCP client = new ClientTCP(mWifiList, this);
-        	client.start();
-        	
-        	// On met à jour la liste locale et la carte
-        	mMap.reset();
-            mWifiList = LocalDatabase.getInstance(this).getAllAccessPoints();
-            for (String key : mWifiList.keySet())
-            {
-            	mMap.setWifiMarker(mWifiList.get(key));
-            }
+        	client.start(new DBSyncListener() {
+				@Override
+				public void onDBSynced() {
+		        	// On met à jour la liste locale et la carte sur le main thread
+					Handler mainHandler = new Handler(MainActivity.this.getMainLooper());
+					Runnable myRunnable = new Runnable() {
+						@Override
+						public void run() {
+							reloadAllFromDB();
+						}
+					};
+					mainHandler.post(myRunnable);
+				}
+			});
         }
-        else if (option.equals(getResources().getString(R.string.info_gps))) // INFOS GPS
+        else if (option.equals(getResources().getString(R.string.menu_info_gps))) // INFOS GPS
     	{
         	// On affiche diverses informations approximatives sur la position
         	Location location = mGPS.getLocationApprox();
@@ -306,6 +313,12 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
             builder.setCancelable(false);
         	AlertDialog alert = builder.create();
     	    alert.show();
+    	}
+        else if (option.equals(getResources().getString(R.string.menu_clear_map))) // INFOS GPS
+    	{
+        	mMap.reset();
+        	mWifiList.clear();
+        	LocalDatabase.getInstance(this).emptyTable();
     	}
     	
     	// Finalement on ferme le menu
@@ -521,5 +534,16 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 
 		TextView textView = (TextView) d.findViewById(android.R.id.message);
 		textView.setTextSize(14);
+	}
+	
+	// Méthode qui efface la liste de WiFi et la carte et recharge tout à partir de la base de donnée
+	private void reloadAllFromDB()
+	{
+		mMap.reset();
+        mWifiList = LocalDatabase.getInstance(MainActivity.this).getAllAccessPoints();
+        for (String key : mWifiList.keySet())
+        {
+        	mMap.setWifiMarker(mWifiList.get(key));
+        }
 	}
 }

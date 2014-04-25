@@ -9,10 +9,12 @@
     <string name="menu_record_stop">Stop recording</string>
     <string name="menu_options">Options</string>
     <string name="menu_testPush">Test push</string>
+    <string name="menu_info_gps">GPS infos</string>
+    <string name="menu_clear_map">Clear map</string>
     
     <string name="pref_key_compass_offset">pref_key_compass_offset</string>
     <string name="pref_key_scanrate">pref_key_scanrate</string>
     
-    <string name="info_gps">GPS infos</string>
+
 
 </resources>
