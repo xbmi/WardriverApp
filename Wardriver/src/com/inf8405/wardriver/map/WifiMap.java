@@ -51,6 +51,8 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
         mMap.setMyLocationEnabled(true);
         mMarkers.clear();
         mCircleOptions.clear();
+        mMarkersBSSID.clear();
+        wifiClickListeners.clear();
 	}
 	
 	// Ajoute un listener
@@ -145,10 +147,15 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
 		}
 	}
 	
-	// Enlève tous les marqueurs de la carte
-	public void clear()
+	// Enlève toutes les données de la carte
+	public void reset()
 	{
 		mMap.clear();
+        mMarkers.clear();
+        mCircleOptions.clear();
+        mMarkersBSSID.clear();
+        wifiClickListeners.clear();
+        shownCircle = null;
 	}
 
 	// Appelé lors d'un changement d'orientation si l'objet actuel est enregistré auprès du "Compass"

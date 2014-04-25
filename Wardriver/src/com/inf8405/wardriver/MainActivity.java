@@ -112,7 +112,10 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         
         // On zoom sur la position actuelle de l'usager
         Location location = mGPS.getLocationApprox();
-        mMap.zoomOnLocation(location.getLatitude(), location.getLongitude());
+        if (location != null)
+        {
+        	mMap.zoomOnLocation(location.getLatitude(), location.getLongitude());
+        }
         
         // On charge la base de donnée locale et met à jour la carte
         mWifiList = LocalDatabase.getInstance(this).getAllAccessPoints();
@@ -275,6 +278,14 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         	
         	ClientTCP client = new ClientTCP(mWifiList, this);
         	client.start();
+        	
+        	// On met à jour la liste locale et la carte
+        	mMap.reset();
+            mWifiList = LocalDatabase.getInstance(this).getAllAccessPoints();
+            for (String key : mWifiList.keySet())
+            {
+            	mMap.setWifiMarker(mWifiList.get(key));
+            }
         }
         else if (option.equals(getResources().getString(R.string.info_gps))) // INFOS GPS
     	{
