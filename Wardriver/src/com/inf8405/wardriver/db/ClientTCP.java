@@ -2,6 +2,7 @@ package com.inf8405.wardriver.db;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -9,6 +10,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -16,6 +18,7 @@ import com.inf8405.wardriver.wifi.WifiInfo;
 
 import android.content.Context;
 import android.provider.Settings.Secure;
+import android.util.Log;
 
 public class ClientTCP {
 	private String serverIpAddr = "soju.no-ip.biz";
@@ -39,13 +42,9 @@ public class ClientTCP {
 			try {
 				socket = new Socket(serverIpAddr, serverPort);
 				
-				OutputStream out = socket.getOutputStream();       
-				PrintWriter output = new PrintWriter(out);
+				PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+				BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				
-				InputStreamReader input = new InputStreamReader(socket.getInputStream());
-				BufferedReader in = new BufferedReader(input);
-				
-				// Hardcoder
 				JSONObject wifiListJSON = new JSONObject();
 				int i = 0;
 				for (String key : wifiMap.keySet())
@@ -62,22 +61,71 @@ public class ClientTCP {
 					wifiNetwork.put("latitude", r.latitude);
 					wifiNetwork.put("longitude", r.longitude);
 					wifiNetwork.put("altitude", r.altitude);
-					//wifiNetwork.put("androidId", Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
 					wifiListJSON.put("wifi_" + Integer.toString(i), wifiNetwork);
 					i += 1;
 				}
 				String jsonStr = wifiListJSON.toString();
-				output.print(jsonStr);
-				output.flush();
+				//System.out.println("Envoi de : " + jsonStr);
+				Integer messageSize = jsonStr.length();
+				
+				out.print(String.format("%016d", Integer.parseInt(messageSize.toString())) + jsonStr);
+				out.flush();
 				
 				String recept = "";
-				if(input.ready()) {
-					recept = in.readLine();
-				}
+				boolean validJson;
 				
-				out.flush();
+				recept = in.readLine();
+				System.out.println("Reception: " + recept);
+				if(recept == "error") {
+					validJson = false;
+				} else {
+					validJson = true;
+				}
+				 
+				/*if(in.ready()) {
+					recept = in.readLine();
+					System.out.println("Reception: " + recept);
+				} else {
+					System.out.println("Probleme de communication!");
+					validJson = false;
+				}*/
+				in.close();
 				out.close();
 				socket.close();
+				
+				if(validJson) {
+					Integer taille = -1;
+					HashMap<String, WifiInfo> hm = null;
+					
+					hm = LocalDatabase.getInstance(context).getAllAccessPoints();
+					taille = hm.size();
+					
+					LocalDatabase.getInstance(context).emptyTable();
+					
+					hm = LocalDatabase.getInstance(context).getAllAccessPoints();
+					taille = hm.size();
+					
+					JSONArray arr = new JSONArray(recept);
+					System.out.println("Nombre d'entrees recues: " + arr.length());
+					for (int j = 0; j < arr.length(); j++) {
+						JSONArray entry = arr.getJSONArray(j);
+						WifiInfo wf = new WifiInfo();
+			    		wf.SSID = (String) entry.get(1);
+			    		wf.BSSID = (String) entry.get(2);
+			    		wf.secured = (boolean) ((Integer) entry.get(3) == 1 ? true : false);
+			    		wf.capabilities = (String) entry.get(4);
+			    		wf.frequency = Float.parseFloat(entry.get(5).toString());
+			    		wf.level = (Integer) entry.get(6);
+			    		wf.distance = (Integer) entry.get(7);
+			    		wf.longitude = Double.parseDouble(entry.get(8).toString());
+			    		wf.latitude = Double.parseDouble(entry.get(9).toString());
+			    		wf.altitude = Double.parseDouble(entry.get(10).toString());
+			    		LocalDatabase.getInstance(context).insertAccessPoint(wf);
+					}
+					
+					hm = LocalDatabase.getInstance(context).getAllAccessPoints();
+					taille = hm.size();			
+				}
 			} catch (UnknownHostException e1) {
 				e1.printStackTrace();
 			} catch (IOException e1) {

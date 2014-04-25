@@ -266,6 +266,13 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         else if(option.equals(getResources().getString(R.string.menu_testPush))) // SYNCRHONISATION AVEC SERVEUR
         {
         	// On synchronise avec un serveur
+        	Integer taille = -1;
+        	HashMap<String, WifiInfo> hm = null;
+        	
+        	hm = LocalDatabase.getInstance(this).getAllAccessPoints();
+			taille = hm.size();
+			System.out.println("Nombre d'entrees dans bd locale: " + taille.toString());
+        	
         	ClientTCP client = new ClientTCP(mWifiList, this);
         	client.start();
         }
