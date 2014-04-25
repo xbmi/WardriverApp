@@ -22,18 +22,19 @@ public class GPS implements LocationListener
 		mRunning = false;
 	}
 	
+	// Démarre la localisation GPS avec un certain intervale de mise à jour
 	public void start(int updateIntervalMS)
 	{
-		mRunning = true;
-		
-		mLocationManager.removeUpdates(this);
-		
+		mRunning = true;		
+		mLocationManager.removeUpdates(this);		
 		mUpdateIntervalMS = updateIntervalMS;
+		
+		// On demande des mises à jour à la fois du GPS et network provider selon l'interval recu
 		mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, mUpdateIntervalMS, 0, this);
 		mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, mUpdateIntervalMS, 0, this);
-		Log.i("GPS", "Request location updates every " + mUpdateIntervalMS + "ms");
 	}
 	
+	// On arrête la localisation
 	public void stop()
 	{
 		mRunning = false;
@@ -41,14 +42,16 @@ public class GPS implements LocationListener
 		mLocationPrecise = null;
 	}
 	
+	// Retourne si la localisation est présentement active
 	public boolean isRunning()
 	{
 		return mRunning;
 	}
 	
+	// Retourne la position précise si elle est disponible et suffisament fraiche, sinon null
 	public Location getLocationPrecise()
 	{
-		// Vérifie si la location est trop vieille
+		// Vérifie si la location est trop vieille (seuil de 3 * l'intervale de mise à jour)
 		if (mLocationPrecise != null && System.currentTimeMillis() - mLocationPrecise.getTime() > 3 * mUpdateIntervalMS)
 		{
 			Log.i("GPS", "Location too old :(");
@@ -61,22 +64,24 @@ public class GPS implements LocationListener
 		}
 	}
 	
+	// Retourne la dernière position connue qui peux être vieille ou approximative
 	public Location getLocationApprox()
 	{
 		String bestProvider = mLocationManager.getBestProvider(new Criteria(), false);
 		return mLocationManager.getLastKnownLocation( bestProvider );
 	}
 
+	// Appelé lors d'un update de position recu par le GPS ou le "network provider"
 	@Override
 	public void onLocationChanged(Location location)
 	{
 		// Si on a deja une position non-expirée
 		if (mLocationPrecise != null && System.currentTimeMillis() - mLocationPrecise.getTime() < 3 * mUpdateIntervalMS)
 		{	
-			// Vérifie si plus précis
+			// On vérifie si plus précis si la nouvelle est plus précise
 			if (mLocationPrecise.getAccuracy() > 0 && location.getAccuracy() > 0 && location.getAccuracy() < mLocationPrecise.getAccuracy())
 			{
-				//plus précis
+				// La nouvelle est plus précise, on prend celle-ci
 				mLocationPrecise = location;
 				Log.i("GPS", "Better accuracy :)");
 			}
@@ -84,7 +89,7 @@ public class GPS implements LocationListener
 		}
 		else
 		{
-			// Null ou expiré, on met à jour
+			// Notre position actuelle est null ou expirée, on utilise la nouvelle
 			mLocationPrecise = location;
 			Log.i("GPS", "Location changed!");
 		}

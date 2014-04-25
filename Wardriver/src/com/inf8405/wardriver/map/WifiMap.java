@@ -51,13 +51,17 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
         mMap.setMyLocationEnabled(true);
         mMarkers.clear();
         mCircleOptions.clear();
+        mMarkersBSSID.clear();
+        wifiClickListeners.clear();
 	}
 	
+	// Ajoute un listener
 	public void addWifiClickListener(WifiMapClickListener l)
 	{
 		wifiClickListeners.add(l);
 	}
 	
+	// Désenregistre un listener
 	public void removeWifiClickListener(WifiMapClickListener l)
 	{
 		wifiClickListeners.remove(l);
@@ -66,7 +70,7 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
 	// Reset l'orientation de la carte vers le Nord
 	public void resetOrientation()
 	{
-		// On remet la caméra droite (vers le nord)
+		// On remet la caméra droite (vers le nord) avec une animation
 		CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition())
 			.bearing(0)
 			.build();
@@ -80,29 +84,29 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
 		CameraPosition camPos = CameraPosition.builder(mMap.getCameraPosition())
 			.bearing(azimuth)
 			.build();
-		mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
+		mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos)); // sans animation
 	}
 	
 	// Ajoute un marqueur sur la carte pour un points d'accès wifi
 	public void setWifiMarker(WifiInfo w)
 	{
-		// Vérifie si existe déjà
+		// Vérifie si un markeur existe déjà pour ce BSSID
 		Marker m = mMarkers.get(w.BSSID);
 		CircleOptions cOptions = mCircleOptions.get(w.BSSID);
 		if (m != null && cOptions != null)
 		{
-			// Existe déjà! On l'update
+			// Existe déjà! On le met à jour (position et rayon)
 			m.setPosition(new LatLng(w.latitude, w.longitude));
 			cOptions.center(new LatLng(w.latitude, w.longitude));
 			cOptions.radius(w.distance);
 		}
 		else
 		{
-			// N'existe pas, on ajoute un nouveau
-			String title = w.SSID;
+			// Aucun marqueur existant, on en ajoute un nouveau
+			String title = w.SSID; // titre est le SSID
 			if (title.isEmpty())
 			{
-				title = "No SSID (hidden)";
+				title = "No SSID (hidden)"; // Certains wifi ne propagent aucun SSID
 			}
 	    	MarkerOptions marker = new MarkerOptions()
 	    		.position(new LatLng(w.latitude, w.longitude))
@@ -136,35 +140,43 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
 				 .strokeColor(Color.TRANSPARENT)
 				 .fillColor(circleFillColor);
 	
-	    	m = mMap.addMarker(marker);
+	    	m = mMap.addMarker(marker); // On ajoute à la carte
 	    	mMarkers.put(w.BSSID, m);
-	    	mCircleOptions.put(w.BSSID, cOptions); // On va seulement afficher le cercle quand le wifi est sélectionné, sinon lag
+	    	mCircleOptions.put(w.BSSID, cOptions); // On va seulement afficher le cercle quand le wifi est sélectionné
 	    	mMarkersBSSID.put(m, w.BSSID);
 		}
 	}
 	
-	// Enlève tous les merqueurs de la carte
-	public void clear()
+	// Enlève toutes les données de la carte
+	public void reset()
 	{
 		mMap.clear();
+        mMarkers.clear();
+        mCircleOptions.clear();
+        mMarkersBSSID.clear();
+        wifiClickListeners.clear();
+        shownCircle = null;
 	}
 
-	// Appelé lors d'un changement d'orientation si l'objet actuel est enregistré
+	// Appelé lors d'un changement d'orientation si l'objet actuel est enregistré auprès du "Compass"
 	@Override
-	public void onOrientationChanged(float azimuth)
+	public void onDeviceAzimuthChanged(float azimuth)
 	{
 		rotateTo(azimuth);
 	}
 
+	// Appelé lorsque l'utilisateur clique sur la bulle d'informations d'un marqueur
 	@Override
 	public void onInfoWindowClick(Marker m)
 	{
+		// On appèle les listeners
 		for (WifiMapClickListener l : wifiClickListeners)
 		{
-			l.onMarkerClick( mMarkersBSSID.get(m) );
+			l.onMarkerInfoClick( mMarkersBSSID.get(m) );
 		}
 	}
 
+	// Appelé lorsque l'utilisateur clique sur un marqueur pour le sélectionner
 	@Override
 	public boolean onMarkerClick(Marker m)
 	{
@@ -174,12 +186,13 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
 			shownCircle.remove();
 		}
 		
-		// On affiche le cercle du wifi
+		// On affiche le cercle (rayon selon puissance) du wifi
 		String BSSID = mMarkersBSSID.get(m);
 		shownCircle = mMap.addCircle( mCircleOptions.get(BSSID) );
 		return false;
 	}
 	
+	// Déplace la caméra avec une animation vers une position recue
 	public void zoomOnLocation(double latitude, double longitute)
 	{
         LatLng coordinate = new LatLng(latitude, longitute);
@@ -187,14 +200,17 @@ public class WifiMap implements CompassListener, OnMarkerClickListener, OnInfoWi
         mMap.animateCamera(yourLocation);
 	}
 	
+	// Applique un filtre sur les marqueurs à afficher sur la carte
 	public void applyFilter(ArrayList<String> bssidsToShow)
 	{
 		for (String bssid : mMarkers.keySet())
 		{
+			// Si le marqueur (identifié par le BSSID) est contenu dans la liste, on le met visible sinon non
 			mMarkers.get(bssid).setVisible(bssidsToShow.contains(bssid));
 		}
 	}
 	
+	// Enlève tout filtre et affiche tous les marqueurs connus
 	public void resetFilter()
 	{
 		for (String bssid : mMarkers.keySet())

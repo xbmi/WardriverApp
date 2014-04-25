@@ -16,12 +16,12 @@ public class SettingsActivity extends PreferenceActivity
         super.onCreate(savedInstanceState);
         getActionBar().setDisplayHomeAsUpEnabled(true);
         
-        // On contruit la page à l'aide du fichier XML de préférences
-        // On n'utilise pas les fragments pour avoir une meilleure rétro-compatibilité
+        // On contruit la page à l'aide du fichier XML de préférences (voir res/xml/preferences.xml)
+        // Deprecated: on n'utilise pas les fragments pour avoir une meilleure rétro-compatibilité
         addPreferencesFromResource(R.xml.preferences);
     }
     
-    // Lorsqu'on clique sur l'icone de l'application en haut à gauche
+    // Lorsqu'on clique sur l'icone de l'application en haut à gauche, même comportement qui si on appuie sur "retour"
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem)
     {       

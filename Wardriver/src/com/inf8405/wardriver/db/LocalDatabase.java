@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import com.inf8405.wardriver.wifi.WifiInfo;
 
+import android.R.bool;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -37,8 +38,6 @@ public class LocalDatabase extends SQLiteOpenHelper {
 	private static final int NUM_COL_LATITUDE = 9;
 	private static final String COL_ALTITUDE = "altitude";
 	private static final int NUM_COL_ALTITUDE = 10;
-	//private static final String COL_ANDROIDID = "androidId";
-	//private static final int NUM_COL_ANDROIDID = 11;
 	
 	private SQLiteDatabase db_write;
 	private SQLiteDatabase db_read;
@@ -97,8 +96,11 @@ public class LocalDatabase extends SQLiteOpenHelper {
 		values.put(COL_LONGITUDE, wf.longitude);
 		values.put(COL_LATITUDE, wf.latitude);
 		values.put(COL_ALTITUDE, wf.altitude);
-		
 		return db_write.insert(TABLE_ACCESS_POINTS, null, values);
+	}
+	
+	public void emptyTable() {
+		db_write.execSQL("DELETE FROM '" + TABLE_ACCESS_POINTS + "'");
 	}
 	
 	public HashMap<String, WifiInfo> getAllAccessPoints() {
