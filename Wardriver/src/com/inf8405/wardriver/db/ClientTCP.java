@@ -76,15 +76,15 @@ public class ClientTCP {
 				//System.out.println("Envoi de : " + jsonStr);
 				Integer messageSize = jsonStr.length();
 				
-				out.print(String.format("%016d", Integer.parseInt(messageSize.toString())) + jsonStr);
+				out.print(String.format("%016d", Integer.parseInt(messageSize.toString())) + jsonStr + "\n");
 				out.flush();
 				
 				String recept = "";
 				boolean validJson;
 				
 				recept = in.readLine();
-				System.out.println("Reception: " + recept);
-				if(recept == "error") {
+				System.out.println("Reception: '" + recept + "' de taille " + recept.length());
+				if(recept.equals("error")) {
 					validJson = false;
 				} else {
 					validJson = true;
