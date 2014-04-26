@@ -34,6 +34,21 @@ public class WifiInfo
 		distance = estimateRouterDistance(r.level, r.frequency);
 	}
 	
+	public void reset()
+	{
+		SSID = "";
+		BSSID = "";
+		secured = false;
+		capabilities = "";
+		frequency = 0f;
+		level = 0;
+		distance = 0;
+		latitude = 0;
+		longitude = 0;
+		altitude = 0;
+		userId = 0;
+	}
+	
 	// Fonction qui estime la distance d'un routeur de maison en fonction de la
 	// force du signal (dBm) et sa fréquence (MHz). Retourne la distance approx en mètres.
 	public static int estimateRouterDistance(double signalStrengthInDBm, double freqInMHz)

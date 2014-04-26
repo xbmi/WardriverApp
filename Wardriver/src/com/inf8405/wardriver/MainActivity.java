@@ -271,13 +271,6 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         else if(option.equals(getResources().getString(R.string.menu_testPush))) // SYNCRHONISATION AVEC SERVEUR
         {
         	// On synchronise avec un serveur
-        	Integer taille = -1;
-        	HashMap<String, WifiInfo> hm = null;
-        	
-        	hm = LocalDatabase.getInstance(this).getAllAccessPoints();
-			taille = hm.size();
-			System.out.println("Nombre d'entrees dans bd locale: " + taille.toString());
-        	
         	ClientTCP client = new ClientTCP(mWifiList, this);
         	client.start(new DBSyncListener() {
 				@Override
@@ -539,6 +532,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	// Méthode qui efface la liste de WiFi et la carte et recharge tout à partir de la base de donnée
 	private void reloadAllFromDB()
 	{
+		Log.i("Main", "Reload de la DB");
 		mMap.reset();
         mWifiList = LocalDatabase.getInstance(MainActivity.this).getAllAccessPoints();
         for (String key : mWifiList.keySet())

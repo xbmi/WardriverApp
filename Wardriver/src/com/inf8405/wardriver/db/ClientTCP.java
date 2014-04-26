@@ -2,9 +2,7 @@ package com.inf8405.wardriver.db;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -17,7 +15,6 @@ import org.json.JSONObject;
 import com.inf8405.wardriver.wifi.WifiInfo;
 
 import android.content.Context;
-import android.provider.Settings.Secure;
 import android.util.Log;
 
 public class ClientTCP {
@@ -83,7 +80,8 @@ public class ClientTCP {
 				boolean validJson;
 				
 				recept = in.readLine();
-				System.out.println("Reception: '" + recept + "' de taille " + recept.length());
+				//System.out.println("Reception: '" + recept + "' de taille " + recept.length());
+				
 				if(recept.equals("error")) {
 					validJson = false;
 				} else {
@@ -102,22 +100,24 @@ public class ClientTCP {
 				socket.close();
 				
 				if(validJson) {
-					Integer taille = -1;
 					HashMap<String, WifiInfo> hm = null;
+					LocalDatabase db = LocalDatabase.getInstance(context);
 					
-					hm = LocalDatabase.getInstance(context).getAllAccessPoints();
-					taille = hm.size();
+					hm = db.getAllAccessPoints();
+					Log.i("Sync", "Taille DB avant la reception: " + hm.size());
 					
-					LocalDatabase.getInstance(context).emptyTable();
+					db.emptyTable();
 					
-					hm = LocalDatabase.getInstance(context).getAllAccessPoints();
-					taille = hm.size();
+					hm = db.getAllAccessPoints();
+					Log.i("Sync", "Taille DB après nettoyage: " + hm.size());
 					
 					JSONArray arr = new JSONArray(recept);
-					System.out.println("Nombre d'entrees recues: " + arr.length());
+					Log.i("Sync", "Nombre d'entrees recues: " + arr.length() + " Ajout a la DB..");
+					
+					WifiInfo wf = new WifiInfo();
 					for (int j = 0; j < arr.length(); j++) {
 						JSONArray entry = arr.getJSONArray(j);
-						WifiInfo wf = new WifiInfo();
+						wf.reset();
 			    		wf.SSID = (String) entry.get(1);
 			    		wf.BSSID = (String) entry.get(2);
 			    		wf.secured = (boolean) ((Integer) entry.get(3) == 1 ? true : false);
@@ -128,11 +128,11 @@ public class ClientTCP {
 			    		wf.longitude = Double.parseDouble(entry.get(8).toString());
 			    		wf.latitude = Double.parseDouble(entry.get(9).toString());
 			    		wf.altitude = Double.parseDouble(entry.get(10).toString());
-			    		LocalDatabase.getInstance(context).insertAccessPoint(wf);
+			    		db.insertAccessPoint(wf);
 					}
 					
-					hm = LocalDatabase.getInstance(context).getAllAccessPoints();
-					taille = hm.size();
+					hm = db.getAllAccessPoints();
+					Log.i("Sync", "Fin d'ajout a la DB. Taille DB après sync: " + hm.size());
 					
 					listener.onDBSynced();
 				}
@@ -141,7 +141,6 @@ public class ClientTCP {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			} catch (JSONException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
