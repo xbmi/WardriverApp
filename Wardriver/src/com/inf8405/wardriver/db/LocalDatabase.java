@@ -12,10 +12,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class LocalDatabase extends SQLiteOpenHelper {
+	
+	// Attributs pour reprensenter la base de donnees
 	private static final int VERSION_BDD = 1;
 	private static final String NOM_BDD = "wardriver.db";
 	private static final String TABLE_ACCESS_POINTS = "access_points";
-	
 	private static final String COL_ID = "id";
 	private static final int NUM_COL_ID = 0;
 	private static final String COL_SSID = "SSID";
@@ -39,16 +40,19 @@ public class LocalDatabase extends SQLiteOpenHelper {
 	private static final String COL_ALTITUDE = "altitude";
 	private static final int NUM_COL_ALTITUDE = 10;
 	
+	// Bases de donnees en lecture et en ecriture
 	private SQLiteDatabase db_write;
 	private SQLiteDatabase db_read;
 	
 	private static LocalDatabase instance = null;
 	
+	// Chaine de creation de la base de donnees
 	private static final String CREATE_BDD = "CREATE TABLE access_points " +
 			"(id INTEGER PRIMARY KEY, SSID TEXT, BSSID TEXT, secured NUMERIC, " +
 			"capabilities TEXT, frequency NUMERIC, level NUMERIC, distance NUMERIC, " +
 			"longitude NUMERIC, latitude NUMERIC, altitude NUMERIC);"; // , androidId TEXT
  
+	// Obtention de l'instance de la base de donnees
 	public static LocalDatabase getInstance(Context context) {
 		if(instance == null) {
 			instance = new LocalDatabase(context);
@@ -56,6 +60,7 @@ public class LocalDatabase extends SQLiteOpenHelper {
 		return instance;
 	}
 	
+	// Creation de la base de donnees
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		db.execSQL(CREATE_BDD);
@@ -67,22 +72,26 @@ public class LocalDatabase extends SQLiteOpenHelper {
 		onCreate(db);
 	}
 	
+	// Constructeur
 	private LocalDatabase(Context context) {
 		super(context, NOM_BDD, null, VERSION_BDD);
 		db_read = getReadableDatabase();
 		db_write = getWritableDatabase();
 	}
 	
+	// Verification des acces points en fonctin du BSSID
 	public boolean checkAccessPoint(WifiInfo wf) {
 	    String query = "SELECT * FROM " + TABLE_ACCESS_POINTS + " WHERE " + COL_BSSID + "=" + wf.BSSID;
 	    Cursor c = db_read.rawQuery(query, null);
 	    return (c.getCount() <= 0) ? false : true;
 	}
 	
+	// Suppression des points d'acces
 	public boolean removeAccessPoint(WifiInfo wf) {
 	    return db_write.delete(TABLE_ACCESS_POINTS, COL_BSSID + " = ?", new String[]{ wf.BSSID }) > 0;
 	}
 	
+	// Insertion d'un point d'acces
 	public long insertAccessPoint(WifiInfo wf) {
 		ContentValues values = new ContentValues();
 		
@@ -99,10 +108,12 @@ public class LocalDatabase extends SQLiteOpenHelper {
 		return db_write.insert(TABLE_ACCESS_POINTS, null, values);
 	}
 	
+	// Vider la table
 	public void emptyTable() {
 		db_write.execSQL("DELETE FROM '" + TABLE_ACCESS_POINTS + "'");
 	}
 	
+	// Obtention de tous les points d'acces
 	public HashMap<String, WifiInfo> getAllAccessPoints() {
 		String query = "SELECT * FROM " + TABLE_ACCESS_POINTS;
 	    Cursor c = db_read.rawQuery(query, null);
